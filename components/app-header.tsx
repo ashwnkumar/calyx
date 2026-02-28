@@ -1,7 +1,9 @@
 import { AuthButton } from "@/components/auth-button";
 import { ThemeSwitcher } from "@/components/theme-switcher";
+import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Suspense } from "react";
+import { Info } from "lucide-react";
 
 export function AppHeader() {
   return (
@@ -11,6 +13,12 @@ export function AppHeader() {
           Calyx
         </Link>
         <div className="flex items-center gap-2 sm:gap-4">
+          <Button asChild variant="ghost" size="sm">
+            <Link href="/about">
+              <Info className="size-4 sm:mr-2" />
+              <span className="hidden sm:inline">About</span>
+            </Link>
+          </Button>
           <ThemeSwitcher />
           <Suspense>
             <AuthButton />

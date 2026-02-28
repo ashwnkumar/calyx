@@ -1417,3 +1417,61 @@ _This file is automatically maintained as development progresses. Each significa
 - Calyx is now fully documented and ready for GitHub
 - README tells the story of why the project exists
 - Clear instructions for anyone wanting to run their own instance
+
+### 2026-02-28 - Public About Page Implementation
+
+**About Page Creation:**
+
+- Created publicly accessible About page (`app/about/page.tsx`):
+  - Comprehensive overview of Calyx project and motivation
+  - Sections: The Problem, What Makes It Different, Features, How It Works, Security Details, Tech Stack, Why "Calyx"
+  - Card-based layout for key differentiators (Zero-Knowledge, Built for Developers, Actually Secure)
+  - Feature grid with icons highlighting main capabilities
+  - Security details card with technical specifications
+  - Tech stack grid showing all technologies used
+  - Call-to-action section with "Get Started" and "View on GitHub" buttons
+  - Responsive design with mobile-first approach
+  - Custom header and footer for standalone page experience
+
+**Navigation Integration:**
+
+- Added About link to app header (`components/app-header.tsx`):
+  - Info icon button with "About" label (icon-only on mobile)
+  - Positioned between logo and theme switcher
+  - Ghost button variant for subtle appearance
+- Enhanced login page (`app/(auth)/login/page.tsx`):
+  - Added header with Calyx logo, About link, and theme switcher
+  - Consistent navigation experience across public pages
+  - Flexbox layout to accommodate header and centered login form
+
+**Content Highlights:**
+
+- Personal story about the "lost .env files" problem
+- Friendly, developer-focused tone throughout
+- Emphasis on zero-knowledge architecture and security
+- Step-by-step "How It Works" guide
+- Detailed security specifications for transparency
+- Complete tech stack listing
+- Etymology of "Calyx" name (protective flower layer)
+
+**Files Created:**
+
+- `app/about/page.tsx` - Public About page with comprehensive project information
+
+**Files Modified:**
+
+- `components/app-header.tsx` - Added About navigation link
+- `app/(auth)/login/page.tsx` - Added header with About link
+
+**Status Update:**
+
+- About Page: ✅ Complete (publicly accessible, comprehensive content)
+- Navigation: ✅ Complete (accessible from dashboard and login)
+- Responsive Design: ✅ Complete (mobile-friendly layout)
+
+**Key Achievement:**
+
+- Users can now learn about Calyx without signing in
+- Consistent navigation experience across public and protected pages
+- About page mirrors README content for web visitors
+- Professional presentation of project motivation and technical details

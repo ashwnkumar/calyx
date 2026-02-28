@@ -27,7 +27,7 @@ export default async function AppLayout({
 
   // If user is not logged in, redirect to login
   if (error || !user) {
-    redirect("/auth/login");
+    redirect("/login");
   }
 
   return (

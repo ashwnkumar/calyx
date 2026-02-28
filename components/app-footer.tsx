@@ -12,7 +12,7 @@ export function AppFooter() {
           </div>
           <div className="flex items-center gap-4">
             <Link 
-              href="https://github.com" 
+              href="https://github.com/ashwnkumar/calyx" 
               target="_blank" 
               rel="noopener noreferrer"
               className="hover:text-foreground transition-colors"
