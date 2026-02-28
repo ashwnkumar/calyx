@@ -1,21 +1,21 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { LoginForm } from "@/components/login-form";
+import { RegisterForm } from "@/components/register-form";
 import { Button } from "@/components/ui/button";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { Info } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Login",
+  title: "Register",
   description:
-    "Sign in to access your encrypted environment variables securely.",
+    "Create an account to start managing your encrypted environment variables securely.",
 };
 
-export default function Page() {
+export default function RegisterPage() {
   return (
     <div className="flex flex-1 items-center justify-center p-6 md:p-10">
       <div className="w-full max-w-sm">
-        <LoginForm />
+        <RegisterForm />
       </div>
     </div>
   );

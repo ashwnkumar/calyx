@@ -1,45 +1,45 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import {
-  ArrowLeft,
-  Lock,
-  Shield,
-  Zap,
-  FileKey,
-  Download,
-  Clock,
-} from "lucide-react";
+import { Lock, Shield, Zap, FileKey, Download, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
-  title: "About",
+  title: "Home",
   description:
-    "Learn about Calyx - a personal, zero-knowledge secrets manager for environment variables built to solve the lost .env files problem.",
+    "Calyx - A personal, zero-knowledge secrets manager for environment variables built to solve the lost .env files problem.",
 };
 
-export default function AboutPage() {
+export default async function HomePage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4">
           <div className="flex items-center justify-between">
-            <Link href="/" className="text-xl sm:text-2xl font-bold">
+            <Link href="/dashboard" className="text-xl sm:text-2xl font-bold">
               Calyx
             </Link>
-            <Button asChild variant="ghost" size="sm">
-              <Link href="/">
-                <ArrowLeft className="size-4 mr-2" />
-                Back
-              </Link>
-            </Button>
+            {user ? (
+              <Button asChild>
+                <Link href="/dashboard">Go to Dashboard</Link>
+              </Button>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Button asChild variant={"outline"}>
+                  <Link href="/register">Register</Link>
+                </Button>
+                <Button asChild>
+                  <Link href="/login">Login</Link>
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </header>
@@ -48,9 +48,7 @@ export default function AboutPage() {
       <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-12">
         {/* Hero Section */}
         <section className="text-center space-y-4">
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold">
-            About Calyx
-          </h1>
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold">Calyx</h1>
           <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto">
             A personal, zero-knowledge secrets manager for environment variables
           </p>
@@ -349,7 +347,9 @@ export default function AboutPage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
             <Button asChild size="lg">
-              <Link href="/login">Get Started</Link>
+              <Link href={user ? "/dashboard" : "/register"}>
+                {user ? "Go to Dashboard" : "Get Started"}
+              </Link>
             </Button>
             <Button asChild variant="outline" size="lg">
               <Link

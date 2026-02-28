@@ -17,31 +17,55 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
-export function LoginForm({
+export function RegisterForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    const supabase = createClient();
     setIsLoading(true);
     setError(null);
 
+    // Validate passwords match
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      toast.error("Passwords do not match");
+      setIsLoading(false);
+      return;
+    }
+
+    // Validate password length
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters");
+      toast.error("Password must be at least 6 characters");
+      setIsLoading(false);
+      return;
+    }
+
+    const supabase = createClient();
+
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        },
       });
+
       if (error) throw error;
 
-      toast.success("Welcome back!");
-      router.push("/dashboard");
+      toast.success(
+        "Account created! Please check your email to verify your account.",
+      );
+      router.push("/login");
     } catch (error: unknown) {
       const message =
         error instanceof Error ? error.message : "An error occurred";
@@ -56,13 +80,13 @@ export function LoginForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">Login</CardTitle>
+          <CardTitle className="text-2xl">Create an account</CardTitle>
           <CardDescription>
-            Enter your email below to login to your account
+            Enter your email below to create your account
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleLogin}>
+          <form onSubmit={handleRegister}>
             <div className="flex flex-col gap-6">
               <div className="grid gap-2">
                 <Label htmlFor="email">Email</Label>
@@ -76,33 +100,33 @@ export function LoginForm({
                 />
               </div>
               <div className="grid gap-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Password</Label>
-                  <a
-                    href="/forgot-password"
-                    className="text-sm underline-offset-4 hover:underline text-muted-foreground"
-                  >
-                    Forgot password?
-                  </a>
-                </div>
+                <Label htmlFor="password">Password</Label>
                 <PasswordInput
                   id="password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  placeholder="At least 6 characters"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="confirm-password">Confirm Password</Label>
+                <PasswordInput
+                  id="confirm-password"
+                  required
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Re-enter your password"
                 />
               </div>
               {error && <p className="text-sm text-red-500">{error}</p>}
               <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Logging in..." : "Login"}
+                {isLoading ? "Creating account..." : "Create account"}
               </Button>
               <div className="text-center text-sm">
-                Don't have an account?{" "}
-                <a
-                  href="/register"
-                  className="underline text-primary underline-offset-4"
-                >
-                  Sign up
+                Already have an account?{" "}
+                <a href="/login" className="underline text-primary underline-offset-4">
+                  Login
                 </a>
               </div>
             </div>

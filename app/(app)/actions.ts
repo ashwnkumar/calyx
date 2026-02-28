@@ -89,7 +89,7 @@ export async function createProject(
   }
 
   // Revalidate the dashboard page
-  revalidatePath("/");
+  revalidatePath("/dashboard");
 
   return {
     success: true,
@@ -145,7 +145,7 @@ export async function deleteProject(
   }
 
   // Revalidate the dashboard page
-  revalidatePath("/");
+  revalidatePath("/dashboard");
 
   return {
     success: true,
@@ -217,7 +217,7 @@ export async function updateProjectName(
   }
 
   // Revalidate both dashboard and project details pages
-  revalidatePath("/");
+  revalidatePath("/dashboard");
   revalidatePath(`/projects/${projectId}`);
 
   return {
@@ -266,7 +266,7 @@ export async function updateProjectDescription(
   }
 
   // Revalidate both dashboard and project details pages
-  revalidatePath("/");
+  revalidatePath("/dashboard");
   revalidatePath(`/projects/${projectId}`);
 
   return {

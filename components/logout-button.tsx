@@ -13,10 +13,12 @@ export function LogoutButton() {
     const supabase = createClient();
     await supabase.auth.signOut();
     toast.info("Logged out successfully");
-    router.push("/login");
+    router.push("/");
   };
 
-  return <Button onClick={logout} size={"icon"}>
-    <LogOut/>
-  </Button>;
+  return (
+    <Button onClick={logout} size={"icon"}>
+      <LogOut />
+    </Button>
+  );
 }

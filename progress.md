@@ -1544,3 +1544,61 @@ _This file is automatically maintained as development progresses. Each significa
 - Production build now passes without errors
 - Clipboard functionality properly handles success and failure cases
 - Better separation of concerns with toast notifications in UI components
+
+### 2026-02-28 - Email Verification Flow & Auth Callback
+
+**Email Verification Implementation:**
+
+- Created auth callback route handler (`app/auth/callback/route.ts`):
+  - Handles Supabase email verification redirects
+  - Exchanges verification code for user session
+  - Redirects authenticated users to dashboard
+  - Completes the registration → verification → login flow
+- Verified registration form email verification handling:
+  - `emailRedirectTo` configured to point to `/auth/callback`
+  - Success toast message prompts users to check email
+  - Redirects to login page after registration
+  - User flow: Register → Check email → Click link → Callback → Dashboard
+- Confirmed Supabase redirect URL configuration:
+  - Production: `https://calyx-store.vercel.app/auth/callback`
+  - Development: `http://localhost:4321/auth/callback`
+  - Reset password URLs also configured
+
+**Email Template Design:**
+
+- Created custom email confirmation template for Supabase:
+  - Matches app design system (warm orange primary color #d97706)
+  - Uses Public Sans and JetBrains Mono fonts from globals.css
+  - Clean, modern aesthetic with proper spacing
+  - Responsive HTML email layout
+  - Includes Calyx branding and zero-knowledge tagline
+  - Primary CTA button with confirmation link
+  - Fallback plain text link for accessibility
+  - Footer with expiration notice (24 hours)
+  - Professional email client compatibility
+
+**Template Features:**
+
+- Inline CSS for email client compatibility
+- Proper color scheme matching app theme
+- Monospace font for URL display
+- Responsive table-based layout
+- Clear call-to-action button
+- Security notice for unintended recipients
+
+**Files Created:**
+
+- `app/auth/callback/route.ts` - Email verification callback handler
+
+**Status Update:**
+
+- Email Verification Flow: ✅ Complete (callback route implemented)
+- Registration Form: ✅ Complete (already configured correctly)
+- Email Template: ✅ Complete (ready to paste into Supabase)
+- Redirect URLs: ✅ Complete (configured in Supabase dashboard)
+
+**Key Achievement:**
+
+- Complete email verification flow from registration to dashboard
+- Custom branded email template matching app design
+- Seamless user experience with proper redirects and feedback

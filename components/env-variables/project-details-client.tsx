@@ -267,7 +267,7 @@ export function ProjectDetailsClient({
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => router.push("/")}
+            onClick={() => router.push("/dashboard")}
             aria-label="Back to projects"
           >
             <ArrowLeft className="h-5 w-5" />
