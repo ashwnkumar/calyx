@@ -1602,3 +1602,26 @@ _This file is automatically maintained as development progresses. Each significa
 - Complete email verification flow from registration to dashboard
 - Custom branded email template matching app design
 - Seamless user experience with proper redirects and feedback
+
+### 2026-02-28 - Auth Layout Redirect Fix
+
+**Authentication Flow Improvement:**
+
+- Updated auth layout redirect behavior (`app/(auth)/layout.tsx`):
+  - Changed redirect destination from "/" to "/dashboard"
+  - Ensures authenticated users land directly on dashboard page
+  - Prevents unnecessary redirect chain (/ → /dashboard)
+  - Improves user experience with direct navigation
+
+**Files Modified:**
+
+- `app/(auth)/layout.tsx` - Updated redirect destination
+
+**Status Update:**
+
+- Auth Redirect: ✅ Complete (direct to dashboard)
+
+**Key Achievement:**
+
+- Cleaner authentication flow with single redirect
+- Users land directly on dashboard after login
