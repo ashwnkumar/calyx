@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { unstable_noStore as noStore } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
@@ -5,6 +6,11 @@ import { AppHeader } from "@/components/app-header";
 import { AppFooter } from "@/components/app-footer";
 import { SecretProvider } from "@/lib/contexts/SecretContext";
 import { PassphraseStatusAlert } from "@/components/passphrase-status-alert";
+
+export const metadata: Metadata = {
+  title: "Dashboard",
+  description: "Manage your encrypted environment variables and projects.",
+};
 
 export default async function AppLayout({
   children,

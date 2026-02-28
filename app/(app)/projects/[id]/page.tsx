@@ -1,4 +1,5 @@
 import { unstable_noStore as noStore } from "next/cache";
+import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { ErrorState } from "@/components/projects/error-state";
 import { ProjectDetailsClient } from "@/components/env-variables/project-details-client";
@@ -30,6 +31,44 @@ type EnvFile = {
   created_at: string;
   updated_at: string;
 };
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id: projectId } = await params;
+  const supabase = await createClient();
+
+  // Validate UUID format
+  if (!isValidUUID(projectId)) {
+    return {
+      title: "Invalid Project",
+      description: "The requested project could not be found.",
+    };
+  }
+
+  // Fetch project name for metadata
+  const { data: project } = await supabase
+    .from("projects")
+    .select("name, description")
+    .eq("id", projectId)
+    .single();
+
+  if (!project) {
+    return {
+      title: "Project Not Found",
+      description: "The requested project could not be found.",
+    };
+  }
+
+  return {
+    title: project.name,
+    description:
+      project.description ||
+      `View and manage encrypted environment variables for ${project.name}`,
+  };
+}
 
 export default async function ProjectDetailsPage({
   params,

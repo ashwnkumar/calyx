@@ -1,7 +1,14 @@
 import { unstable_noStore as noStore } from "next/cache";
+import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { ProjectListingClient } from "@/components/projects/project-listing-client";
 import { ErrorState } from "@/components/projects/error-state";
+
+export const metadata: Metadata = {
+  title: "Dashboard",
+  description:
+    "Manage your encrypted environment variable projects securely with zero-knowledge encryption.",
+};
 
 export default async function DashboardPage() {
   noStore();

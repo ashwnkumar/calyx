@@ -1,5 +1,11 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+
+export const metadata: Metadata = {
+  title: "Authentication",
+  description: "Sign in to Calyx to access your encrypted secrets.",
+};
 
 export default async function AuthLayout({
   children,
@@ -7,7 +13,9 @@ export default async function AuthLayout({
   children: React.ReactNode;
 }) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   // If user is already logged in, redirect to dashboard
   if (user) {
@@ -16,9 +24,7 @@ export default async function AuthLayout({
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        {children}
-      </div>
+      <div className="w-full max-w-md">{children}</div>
     </div>
   );
 }
