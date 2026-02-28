@@ -14,6 +14,7 @@ type Project = {
   description: string | null;
   created_at: string;
   updated_at: string;
+  env_vars: { count: number }[];
 };
 
 type ProjectListingClientProps = {
@@ -35,6 +36,11 @@ export function ProjectListingClient({
     setProjects((prev) => [newProject, ...prev]);
   };
 
+  const handleProjectDeleted = (projectId: string) => {
+    // Remove deleted project from state
+    setProjects((prev) => prev.filter((p) => p.id !== projectId));
+  };
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -50,7 +56,10 @@ export function ProjectListingClient({
 
       {/* Project Grid or Empty State */}
       {projects.length > 0 ? (
-        <ProjectGrid projects={projects} />
+        <ProjectGrid
+          projects={projects}
+          onProjectDeleted={handleProjectDeleted}
+        />
       ) : (
         <EmptyState onAddProject={openDialog} />
       )}

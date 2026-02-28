@@ -1,9 +1,17 @@
 "use client";
 
 import { formatDistanceToNow } from "date-fns";
-import { Lock, LockOpen, Copy, Download, AlertCircle } from "lucide-react";
+import {
+  Lock,
+  LockOpen,
+  Copy,
+  Download,
+  AlertCircle,
+  Search,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -19,7 +27,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useSecrets } from "@/lib/contexts/SecretContext";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { decrypt } from "@/lib/crypto";
 import { copyToClipboard } from "@/lib/clipboard-utils";
 import { isValidBase64 } from "@/lib/download-utils";
@@ -42,19 +50,23 @@ type EnvVariableTableProps = {
   selectionMode?: boolean;
 };
 
+type EnvVariableRowProps = {
+  envVar: EnvVariable;
+  projectName: string;
+  isSelected: boolean;
+  onSelectionChange?: (id: string, selected: boolean) => void;
+  selectionMode: boolean;
+  onDecryptedValueChange?: (id: string, value: string | null) => void;
+};
+
 function EnvVariableRow({
   envVar,
   projectName,
   isSelected,
   onSelectionChange,
   selectionMode,
-}: {
-  envVar: EnvVariable;
-  projectName: string;
-  isSelected: boolean;
-  onSelectionChange?: (id: string, selected: boolean) => void;
-  selectionMode: boolean;
-}) {
+  onDecryptedValueChange,
+}: EnvVariableRowProps) {
   const { isUnlocked, cryptoKey } = useSecrets();
   const [decryptedValue, setDecryptedValue] = useState<string | null>(null);
 
@@ -117,6 +129,9 @@ function EnvVariableRow({
     async function loadDecryptedValue() {
       if (!isUnlocked || !cryptoKey) {
         setDecryptedValue(null);
+        if (onDecryptedValueChange) {
+          onDecryptedValueChange(envVar.id, null);
+        }
         return;
       }
 
@@ -128,12 +143,18 @@ function EnvVariableRow({
         );
         if (isMounted) {
           setDecryptedValue(plaintext);
+          if (onDecryptedValueChange) {
+            onDecryptedValueChange(envVar.id, plaintext);
+          }
         }
       } catch (error) {
         if (isMounted) {
           console.error("Decryption failed:", error);
           toast.error("Failed to decrypt value");
           setDecryptedValue(null);
+          if (onDecryptedValueChange) {
+            onDecryptedValueChange(envVar.id, null);
+          }
         }
       }
     }
@@ -143,7 +164,14 @@ function EnvVariableRow({
     return () => {
       isMounted = false;
     };
-  }, [isUnlocked, cryptoKey, envVar.iv, envVar.ciphertext]);
+  }, [
+    isUnlocked,
+    cryptoKey,
+    envVar.iv,
+    envVar.ciphertext,
+    envVar.id,
+    onDecryptedValueChange,
+  ]);
 
   return (
     <TableRow className={isSelected ? "bg-muted/50" : ""}>
@@ -167,11 +195,11 @@ function EnvVariableRow({
       <TableCell className="max-w-md">
         {isUnlocked ? (
           <div className="flex items-center gap-2">
-            {decryptedValue && decryptedValue.length > 30 ? (
+            {decryptedValue && decryptedValue.length > 35 ? (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <code className="text-sm break-all flex-1 cursor-help">
-                    {decryptedValue.substring(0, 30)}...
+                    {decryptedValue.substring(0, 35)}...
                   </code>
                 </TooltipTrigger>
                 <TooltipContent className="max-w-md break-all">
@@ -231,36 +259,122 @@ export function EnvVariableTable({
   onSelectionChange,
   selectionMode = false,
 }: EnvVariableTableProps) {
+  const { isUnlocked } = useSecrets();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [decryptedValues, setDecryptedValues] = useState<
+    Map<string, string | null>
+  >(new Map());
+
+  // Handle decrypted value updates from rows
+  const handleDecryptedValueChange = useCallback(
+    (id: string, value: string | null) => {
+      setDecryptedValues((prev) => {
+        // Only update if value actually changed
+        if (prev.get(id) === value) {
+          return prev;
+        }
+        const newMap = new Map(prev);
+        newMap.set(id, value);
+        return newMap;
+      });
+    },
+    [],
+  );
+
+  // Filter env vars based on search query
+  const filteredEnvVars = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return envVars;
+    }
+
+    const query = searchQuery.toLowerCase();
+
+    return envVars.filter((envVar) => {
+      // Always search by key
+      if (envVar.key.toLowerCase().includes(query)) {
+        return true;
+      }
+
+      // If unlocked, also search by decrypted value
+      if (isUnlocked) {
+        const decryptedValue = decryptedValues.get(envVar.id);
+        if (decryptedValue && decryptedValue.toLowerCase().includes(query)) {
+          return true;
+        }
+      }
+
+      return false;
+    });
+  }, [envVars, searchQuery, isUnlocked, decryptedValues]);
+
   if (envVars.length === 0) {
     return null;
   }
 
   return (
     <TooltipProvider>
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              {selectionMode && <TableHead className="w-12"></TableHead>}
-              <TableHead>Key</TableHead>
-              <TableHead className="max-w-md">Value</TableHead>
-              <TableHead className="text-center">Status</TableHead>
-              <TableHead>Created</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {envVars.map((envVar) => (
-              <EnvVariableRow
-                key={envVar.id}
-                envVar={envVar}
-                projectName={projectName}
-                isSelected={selectedIds.has(envVar.id)}
-                onSelectionChange={onSelectionChange}
-                selectionMode={selectionMode}
-              />
-            ))}
-          </TableBody>
-        </Table>
+      <div className="space-y-4">
+        {/* Search Input */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="text"
+            placeholder={
+              isUnlocked ? "Search by key or value..." : "Search by key..."
+            }
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+
+        {/* Results Count */}
+        {searchQuery && (
+          <p className="text-sm text-muted-foreground">
+            {filteredEnvVars.length === 0
+              ? "No environment variables found"
+              : `Showing ${filteredEnvVars.length} of ${envVars.length} environment variable${envVars.length !== 1 ? "s" : ""}`}
+          </p>
+        )}
+
+        {/* Table */}
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                {selectionMode && <TableHead className="w-12"></TableHead>}
+                <TableHead>Key</TableHead>
+                <TableHead className="max-w-md">Value</TableHead>
+                <TableHead className="text-center">Status</TableHead>
+                <TableHead>Created</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredEnvVars.length > 0 ? (
+                filteredEnvVars.map((envVar) => (
+                  <EnvVariableRow
+                    key={envVar.id}
+                    envVar={envVar}
+                    projectName={projectName}
+                    isSelected={selectedIds.has(envVar.id)}
+                    onSelectionChange={onSelectionChange}
+                    selectionMode={selectionMode}
+                    onDecryptedValueChange={handleDecryptedValueChange}
+                  />
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={selectionMode ? 5 : 4}
+                    className="text-center py-8 text-muted-foreground"
+                  >
+                    No environment variables match your search
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
     </TooltipProvider>
   );

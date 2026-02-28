@@ -44,7 +44,8 @@ export function PassphraseStatusAlert() {
               Your secrets are locked. Enter your passphrase to view them.
             </AlertDescription>
           </div>
-          <Button onClick={() => setUnlockOpen(true)} size="sm">
+          <Button onClick={() => setUnlockOpen(true)} size="sm" variant={"secondary"}>
+            <LockOpen/>
             Unlock
           </Button>
         </Alert>
@@ -62,7 +63,8 @@ export function PassphraseStatusAlert() {
           Secrets unlocked
         </AlertDescription>
       </div>
-      <Button onClick={lock} size="sm" variant="outline">
+      <Button onClick={lock} size="sm" variant={"secondary"}>
+        <Lock/>
         Lock
       </Button>
     </Alert>

@@ -13,7 +13,7 @@ export function LogoutButton() {
     const supabase = createClient();
     await supabase.auth.signOut();
     toast.info("Logged out successfully");
-    router.push("/auth/login");
+    router.push("/login");
   };
 
   return <Button onClick={logout} size={"icon"}>

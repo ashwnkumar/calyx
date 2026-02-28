@@ -23,6 +23,7 @@ type Project = {
   description: string | null;
   created_at: string;
   updated_at: string;
+  env_vars: { count: number }[];
 };
 
 type AddProjectDialogProps = {

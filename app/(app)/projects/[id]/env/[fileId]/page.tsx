@@ -1,7 +1,7 @@
 import { unstable_noStore as noStore } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { ErrorState } from "@/components/projects/error-state";
-import { ProjectDetailsClient } from "@/components/env-variables/project-details-client";
+import { EnvFileDetailsClient } from "@/components/env-variables/env-file-details-client";
 
 /**
  * Validates if a string is a valid UUID v4 format
@@ -16,8 +16,6 @@ type Project = {
   id: string;
   name: string;
   description: string | null;
-  created_at: string;
-  updated_at: string;
 };
 
 type EnvFile = {
@@ -31,55 +29,56 @@ type EnvFile = {
   updated_at: string;
 };
 
-export default async function ProjectDetailsPage({
+export default async function EnvFileDetailsPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ id: string; fileId: string }>;
 }) {
   noStore();
 
-  const { id: projectId } = await params;
+  const { id: projectId, fileId } = await params;
   const supabase = await createClient();
 
-  // Validate UUID format
-  if (!isValidUUID(projectId)) {
+  // Validate UUID formats
+  if (!isValidUUID(projectId) || !isValidUUID(fileId)) {
     return (
-      <ErrorState message="Invalid project ID. Please check the URL and try again." />
+      <ErrorState message="Invalid ID. Please check the URL and try again." />
     );
   }
 
-  // Fetch project metadata with RLS enforcement
+  // Fetch project metadata
   const { data: project, error: projectError } = await supabase
     .from("projects")
-    .select("id, name, description, created_at, updated_at")
+    .select("id, name, description")
     .eq("id", projectId)
     .single();
 
-  // Handle project not found or access denied (RLS)
   if (projectError || !project) {
     return (
       <ErrorState message="Project not found or you don't have access to it." />
     );
   }
 
-  // Fetch env_vars (env files) for this project ordered by created_at (newest first)
-  const { data: envFiles, error: envError } = await supabase
+  // Fetch env file
+  const { data: envFile, error: envFileError } = await supabase
     .from("env_vars")
     .select(
       "id, project_id, user_id, name, iv, ciphertext, created_at, updated_at",
     )
+    .eq("id", fileId)
     .eq("project_id", projectId)
-    .order("created_at", { ascending: false });
+    .single();
 
-  // Log error but continue with empty array rather than failing completely
-  if (envError) {
-    console.error("Failed to fetch env files:", envError);
+  if (envFileError || !envFile) {
+    return (
+      <ErrorState message="Environment file not found or you don't have access to it." />
+    );
   }
 
   return (
-    <ProjectDetailsClient
+    <EnvFileDetailsClient
       project={project as Project}
-      initialEnvFiles={(envFiles as EnvFile[]) ?? []}
+      envFile={envFile as EnvFile}
     />
   );
 }
