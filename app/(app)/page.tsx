@@ -1,21 +1,20 @@
-export default async function DashboardPage() {
-  return (
-    <div className="flex-1 w-full flex flex-col gap-8">
-      <div className="w-full">
-        <h1 className="text-3xl font-bold">Dashboard</h1>
-        <p className="text-muted-foreground mt-2">
-          Welcome to your secure secrets manager
-        </p>
-      </div>
+import { unstable_noStore as noStore } from "next/cache";
+import { createClient } from "@/lib/supabase/server";
+import { ProjectListingClient } from "@/components/projects/project-listing-client";
+import { ErrorState } from "@/components/projects/error-state";
 
-      <div className="flex flex-col gap-4">
-        <div className="bg-accent/50 text-sm p-4 rounded-lg border">
-          <p className="font-medium mb-1">Getting Started</p>
-          <p className="text-muted-foreground">
-            Your dashboard is ready. Projects and environment variables will appear here.
-          </p>
-        </div>
-      </div>
-    </div>
-  );
+export default async function DashboardPage() {
+  noStore();
+  const supabase = await createClient();
+
+  const { data: projects, error } = await supabase
+    .from("projects")
+    .select("id, user_id, name, description, created_at, updated_at")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    return <ErrorState message={error.message} />;
+  }
+
+  return <ProjectListingClient initialProjects={projects ?? []} />;
 }
