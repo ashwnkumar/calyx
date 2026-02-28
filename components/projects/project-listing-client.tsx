@@ -42,16 +42,20 @@ export function ProjectListingClient({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Projects</h1>
-          <p className="text-muted-foreground mt-1">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+            Projects
+          </h1>
+          <p className="text-sm sm:text-base text-muted-foreground mt-1">
             Manage your environment variables securely across projects
           </p>
         </div>
-        <Button onClick={openDialog}>Add Project</Button>
+        <Button onClick={openDialog} className="w-full sm:w-auto">
+          Add Project
+        </Button>
       </div>
 
       {/* Project Grid or Empty State */}

@@ -110,7 +110,9 @@ export function ProjectCard({ project, onProjectDeleted }: ProjectCardProps) {
       >
         <CardHeader>
           <div className="flex items-start justify-between gap-2">
-            <CardTitle className="text-xl flex-1">{project.name}</CardTitle>
+            <CardTitle className="text-lg sm:text-xl flex-1 break-words">
+              {project.name}
+            </CardTitle>
             <div className="flex items-center gap-2">
               <Badge variant="secondary" className="gap-1.5">
                 <FileKey className="h-3.5 w-3.5" />

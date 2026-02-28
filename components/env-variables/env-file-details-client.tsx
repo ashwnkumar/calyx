@@ -281,19 +281,21 @@ export function EnvFileDetailsClient({
   );
 
   return (
-    <div className="container mx-auto p-6 max-w-5xl">
+    <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 max-w-5xl">
       {/* Page Header */}
-      <div className="mb-6">
-        <div className="flex items-center gap-4 mb-4">
+      <div className="mb-4 sm:mb-6">
+        {/* Back button and title row */}
+        <div className="flex items-start gap-2 sm:gap-4 mb-3 sm:mb-4">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => router.push(`/projects/${project.id}`)}
             aria-label="Back to project"
+            className="shrink-0 mt-1"
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             {isEditingName ? (
               <div className="flex items-center gap-2">
                 <Input
@@ -301,7 +303,7 @@ export function EnvFileDetailsClient({
                   onChange={(e) => setEditedName(e.target.value)}
                   onKeyDown={handleNameKeyDown}
                   disabled={isSavingName}
-                  className="text-3xl font-bold h-auto py-1 px-2"
+                  className="text-xl sm:text-2xl lg:text-3xl font-bold h-auto py-1 px-2"
                   maxLength={100}
                   autoFocus
                 />
@@ -311,6 +313,7 @@ export function EnvFileDetailsClient({
                   onClick={handleSaveName}
                   disabled={isSavingName}
                   aria-label="Save name"
+                  className="shrink-0"
                 >
                   <Check className="h-5 w-5 text-green-600" />
                 </Button>
@@ -320,78 +323,92 @@ export function EnvFileDetailsClient({
                   onClick={handleCancelNameEdit}
                   disabled={isSavingName}
                   aria-label="Cancel edit"
+                  className="shrink-0"
                 >
                   <X className="h-5 w-5 text-muted-foreground" />
                 </Button>
               </div>
             ) : (
               <div className="flex items-center gap-2 group">
-                <h1 className="text-3xl font-bold">{currentEnvFile.name}</h1>
+                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold truncate">
+                  {currentEnvFile.name}
+                </h1>
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={handleEditNameClick}
-                  className="opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shrink-0"
                   aria-label="Edit file name"
                 >
                   <Pencil className="h-4 w-4" />
                 </Button>
                 {isUnlocked ? (
-                  <LockOpen className="h-5 w-5 text-green-600" />
+                  <LockOpen className="h-5 w-5 text-green-600 shrink-0" />
                 ) : (
-                  <Lock className="h-5 w-5 text-muted-foreground" />
+                  <Lock className="h-5 w-5 text-muted-foreground shrink-0" />
                 )}
               </div>
             )}
-            <p className="text-muted-foreground mt-1">
+            <p className="text-sm text-muted-foreground mt-1 truncate">
               {project.name} • Created {formattedDate}
             </p>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={handleCopy} className="gap-2">
-              <Copy className="h-4 w-4" />
-              Copy
-            </Button>
+        </div>
+
+        {/* Action buttons - responsive layout */}
+        <div className="flex flex-wrap gap-2 ml-0 sm:ml-14">
+          <Button
+            variant="outline"
+            onClick={handleCopy}
+            className="gap-2 flex-1 sm:flex-none"
+            size="sm"
+          >
+            <Copy className="h-4 w-4" />
+            <span className="hidden sm:inline">Copy</span>
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleDownload}
+            className="gap-2 flex-1 sm:flex-none"
+            size="sm"
+          >
+            <Download className="h-4 w-4" />
+            <span className="hidden sm:inline">Download</span>
+          </Button>
+          {isUnlocked && !isEditing && (
             <Button
               variant="outline"
-              onClick={handleDownload}
-              className="gap-2"
+              onClick={handleEditClick}
+              className="gap-2 flex-1 sm:flex-none"
+              size="sm"
             >
-              <Download className="h-4 w-4" />
-              Download
+              <Edit className="h-4 w-4" />
+              <span className="hidden sm:inline">Edit</span>
             </Button>
-            {isUnlocked && !isEditing && (
+          )}
+          {isEditing && (
+            <>
+              <Button
+                onClick={handleSaveEdit}
+                disabled={isSaving}
+                className="gap-2 flex-1 sm:flex-none"
+                size="sm"
+              >
+                <Save className="h-4 w-4" />
+                {isSaving ? "Saving..." : "Save"}
+              </Button>
               <Button
                 variant="outline"
-                onClick={handleEditClick}
-                className="gap-2"
+                onClick={handleCancelEdit}
+                disabled={isSaving}
+                className="gap-2 flex-1 sm:flex-none"
+                size="sm"
               >
-                <Edit className="h-4 w-4" />
-                Edit
+                <X className="h-4 w-4" />
+                Cancel
               </Button>
-            )}
-            {isEditing && (
-              <>
-                <Button
-                  onClick={handleSaveEdit}
-                  disabled={isSaving}
-                  className="gap-2"
-                >
-                  <Save className="h-4 w-4" />
-                  {isSaving ? "Saving..." : "Save"}
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={handleCancelEdit}
-                  disabled={isSaving}
-                  className="gap-2"
-                >
-                  <X className="h-4 w-4" />
-                  Cancel
-                </Button>
-              </>
-            )}
-          </div>
+            </>
+          )}
         </div>
       </div>
 
@@ -399,12 +416,12 @@ export function EnvFileDetailsClient({
       <LockIndicator isUnlocked={isUnlocked} />
 
       {/* Content Display */}
-      <Card className="mt-6">
+      <Card className="mt-4 sm:mt-6">
         <CardHeader>
-          <CardTitle>
+          <CardTitle className="text-lg sm:text-xl">
             {isUnlocked ? "Environment Variables" : "Encrypted Content"}
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-sm">
             {isUnlocked
               ? isEditing
                 ? "Edit your environment variables below"
@@ -414,8 +431,8 @@ export function EnvFileDetailsClient({
         </CardHeader>
         <CardContent>
           {isDecrypting ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="text-muted-foreground">Decrypting...</div>
+            <div className="flex items-center justify-center py-8 sm:py-12">
+              <div className="text-muted-foreground text-sm">Decrypting...</div>
             </div>
           ) : isUnlocked && decryptedContent !== null ? (
             isEditing ? (
@@ -423,21 +440,21 @@ export function EnvFileDetailsClient({
                 value={editedContent}
                 onChange={(e) => setEditedContent(e.target.value)}
                 disabled={isSaving}
-                className="font-mono text-sm min-h-[400px] resize-none"
+                className="font-mono text-xs sm:text-sm min-h-[300px] sm:min-h-[400px] resize-none"
                 placeholder="Paste your .env file content here..."
               />
             ) : (
-              <pre className="font-mono text-sm bg-muted p-4 rounded-md overflow-x-auto whitespace-pre-wrap break-words">
+              <pre className="font-mono text-xs sm:text-sm bg-muted p-3 sm:p-4 rounded-md overflow-x-auto whitespace-pre-wrap break-words">
                 {decryptedContent}
               </pre>
             )
           ) : (
-            <div className="bg-muted p-4 rounded-md">
-              <pre className="font-mono text-sm text-muted-foreground overflow-x-auto whitespace-pre-wrap break-all">
+            <div className="bg-muted p-3 sm:p-4 rounded-md">
+              <pre className="font-mono text-xs sm:text-sm text-muted-foreground overflow-x-auto whitespace-pre-wrap break-all">
                 {currentEnvFile.ciphertext.substring(0, 200)}
                 {currentEnvFile.ciphertext.length > 200 && "..."}
               </pre>
-              <p className="text-sm text-muted-foreground mt-4">
+              <p className="text-xs sm:text-sm text-muted-foreground mt-3 sm:mt-4">
                 This content is encrypted. Unlock your secrets to view the
                 decrypted content.
               </p>

@@ -260,10 +260,10 @@ export function ProjectDetailsClient({
   };
 
   return (
-    <div className="container mx-auto p-6 max-w-7xl">
+    <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 max-w-7xl">
       {/* Page Header */}
-      <div className="mb-6">
-        <div className="flex items-center gap-4 mb-4">
+      <div className="mb-4 sm:mb-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 mb-4">
           <Button
             variant="ghost"
             size="icon"
@@ -274,13 +274,13 @@ export function ProjectDetailsClient({
           </Button>
           <div className="flex-1">
             {isEditingName ? (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-1 min-w-0">
                 <Input
                   value={editedName}
                   onChange={(e) => setEditedName(e.target.value)}
                   onKeyDown={handleNameKeyDown}
                   disabled={isSavingName}
-                  className="text-3xl font-bold h-auto py-1 px-2"
+                  className="text-2xl sm:text-3xl font-bold h-auto py-1 px-2"
                   maxLength={100}
                   autoFocus
                 />
@@ -304,13 +304,15 @@ export function ProjectDetailsClient({
                 </Button>
               </div>
             ) : (
-              <div className="flex items-center gap-2 group">
-                <h1 className="text-3xl font-bold">{project.name}</h1>
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                <h1 className="text-2xl sm:text-3xl font-bold truncate">
+                  {project.name}
+                </h1>
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={handleEditNameClick}
-                  className="opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
                   aria-label="Edit project name"
                 >
                   <Pencil className="h-4 w-4" />
@@ -362,7 +364,7 @@ export function ProjectDetailsClient({
                   variant="ghost"
                   size="icon"
                   onClick={handleEditDescriptionClick}
-                  className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6"
+                  className="sm:opacity-0 sm:group-hover:opacity-100 transition-opacity h-6 w-6"
                   aria-label="Edit project description"
                 >
                   <Pencil className="h-3 w-3" />
@@ -373,10 +375,10 @@ export function ProjectDetailsClient({
           <Button
             onClick={handleAddClick}
             disabled={!isUnlocked}
-            className="gap-2"
+            className="gap-2 w-full sm:w-auto"
           >
             <Plus className="h-4 w-4" />
-            Add Environment File
+            <span className="sm:inline">Add Environment File</span>
           </Button>
         </div>
       </div>
@@ -394,7 +396,7 @@ export function ProjectDetailsClient({
 
       {/* Environment Files Grid or Empty State */}
       {envFiles.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mt-4 sm:mt-6">
           {envFiles.map((file) => (
             <EnvFileCard
               key={file.id}

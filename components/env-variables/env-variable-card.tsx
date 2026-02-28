@@ -131,7 +131,7 @@ export function EnvVariableCard({
 
   return (
     <Card
-      className={`p-4 ${!isValidData ? "border-destructive" : ""} ${
+      className={`p-3 sm:p-4 ${!isValidData ? "border-destructive" : ""} ${
         isSelected ? "ring-2 ring-primary" : ""
       }`}
     >
@@ -174,26 +174,28 @@ export function EnvVariableCard({
               <p className="text-sm font-mono break-all">
                 {decryptedValue || "••••••••"}
               </p>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleCopyDecrypted}
-                className="w-full"
-                disabled={!decryptedValue}
-              >
-                <Copy className="h-4 w-4 mr-2" />
-                Copy Value
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleDownloadDecrypted}
-                className="w-full"
-                disabled={!decryptedValue}
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Download as .env
-              </Button>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCopyDecrypted}
+                  className="flex-1"
+                  disabled={!decryptedValue}
+                >
+                  <Copy className="h-4 w-4 mr-2" />
+                  Copy Value
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleDownloadDecrypted}
+                  className="flex-1"
+                  disabled={!decryptedValue}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download as .env
+                </Button>
+              </div>
             </div>
           ) : (
             <div className="p-2 bg-muted/50 rounded-md border border-muted">
