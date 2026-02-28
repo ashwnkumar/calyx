@@ -1475,3 +1475,37 @@ _This file is automatically maintained as development progresses. Each significa
 - Consistent navigation experience across public and protected pages
 - About page mirrors README content for web visitors
 - Professional presentation of project motivation and technical details
+
+### 2026-02-28 - About Page Middleware Fix
+
+**Middleware Configuration:**
+
+- Fixed About page accessibility issue for unauthenticated users:
+  - Updated `lib/supabase/proxy.ts` to allow `/about` route without authentication
+  - Added `/about` to the list of public routes alongside `/login` and `/auth`
+  - Middleware was previously redirecting all unauthenticated users to `/login`
+- About page now accessible to both authenticated and unauthenticated users:
+  - Works from login page (before authentication)
+  - Works from dashboard (after authentication)
+  - Direct URL navigation works correctly
+
+**Technical Details:**
+
+- Modified `updateSession` function in Supabase proxy
+- Added condition: `!request.nextUrl.pathname.startsWith("/about")`
+- Prevents redirect loop when accessing About page without authentication
+
+**Files Modified:**
+
+- `lib/supabase/proxy.ts` - Added `/about` to public routes whitelist
+
+**Status Update:**
+
+- About Page Access: ✅ Complete (accessible to all users)
+- Middleware Configuration: ✅ Complete (public route whitelisting)
+
+**Key Achievement:**
+
+- About page now truly public and accessible from anywhere
+- No authentication required to learn about Calyx
+- Consistent navigation experience for all users
