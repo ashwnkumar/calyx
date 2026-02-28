@@ -54,10 +54,11 @@ export function EnvVariableCard({
       return;
     }
 
-    try {
-      await copyToClipboard(decryptedValue);
-    } catch (error) {
-      // Error already handled by copyToClipboard
+    const success = await copyToClipboard(decryptedValue);
+    if (success) {
+      toast.success("Copied to clipboard");
+    } else {
+      toast.error("Failed to copy to clipboard");
     }
   };
 

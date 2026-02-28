@@ -1509,3 +1509,38 @@ _This file is automatically maintained as development progresses. Each significa
 - About page now truly public and accessible from anywhere
 - No authentication required to learn about Calyx
 - Consistent navigation experience for all users
+
+### 2026-02-28 - Build Error Fixes
+
+**Clipboard Utility Refactor:**
+
+- Fixed TypeScript build error in clipboard functionality:
+  - Changed `copyToClipboard` return type from `Promise<void>` to `Promise<boolean>`
+  - Removed internal toast notifications from clipboard utility
+  - Moved toast notifications to calling components for better control
+  - Updated all usages across the application to handle boolean return value
+- Updated components:
+  - `components/env-variables/env-file-details-client.tsx` - Added success/error handling
+  - `components/env-variables/env-variable-table.tsx` - Added success/error handling
+  - `components/env-variables/env-variable-card.tsx` - Added success/error handling
+  - `lib/clipboard-utils.ts` - Refactored to return boolean instead of throwing errors
+
+**Build Status:**
+
+- ✅ TypeScript compilation successful
+- ✅ Next.js production build successful
+- ✅ All routes generated correctly
+- ✅ No build errors
+
+**Files Modified:**
+
+- `lib/clipboard-utils.ts` - Changed return type and removed internal toasts
+- `components/env-variables/env-file-details-client.tsx` - Updated to handle boolean return
+- `components/env-variables/env-variable-table.tsx` - Updated to handle boolean return
+- `components/env-variables/env-variable-card.tsx` - Updated to handle boolean return
+
+**Key Achievement:**
+
+- Production build now passes without errors
+- Clipboard functionality properly handles success and failure cases
+- Better separation of concerns with toast notifications in UI components

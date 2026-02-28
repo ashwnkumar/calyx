@@ -141,6 +141,8 @@ export function EnvFileDetailsClient({
           ? "Decrypted content copied to clipboard"
           : "Encrypted content copied to clipboard",
       );
+    } else {
+      toast.error("Failed to copy to clipboard");
     }
   };
 

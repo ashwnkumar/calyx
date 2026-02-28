@@ -85,11 +85,12 @@ function EnvVariableRow({
       return;
     }
 
-    try {
-      const envPair = `${envVar.key}=${decryptedValue}`;
-      await copyToClipboard(envPair);
-    } catch (error) {
-      // Error already handled by copyToClipboard
+    const envPair = `${envVar.key}=${decryptedValue}`;
+    const success = await copyToClipboard(envPair);
+    if (success) {
+      toast.success("Copied to clipboard");
+    } else {
+      toast.error("Failed to copy to clipboard");
     }
   };
 

@@ -1,5 +1,3 @@
-import { toast } from "sonner";
-
 /**
  * Copy text to clipboard using Clipboard API with fallback to execCommand
  *
@@ -7,15 +5,14 @@ import { toast } from "sonner";
  * deprecated execCommand method for older browsers or when permissions are denied.
  *
  * @param text - The text to copy to the clipboard
- * @throws Error if both methods fail
+ * @returns Promise<boolean> - true if successful, false otherwise
  */
-export async function copyToClipboard(text: string): Promise<void> {
+export async function copyToClipboard(text: string): Promise<boolean> {
   try {
     // Primary path: Modern Clipboard API
     if (navigator.clipboard && navigator.clipboard.writeText) {
       await navigator.clipboard.writeText(text);
-      toast.success("Copied to clipboard");
-      return;
+      return true;
     }
 
     // Fallback path: Deprecated execCommand (for older browsers)
@@ -33,14 +30,9 @@ export async function copyToClipboard(text: string): Promise<void> {
     const success = document.execCommand("copy");
     document.body.removeChild(textarea);
 
-    if (success) {
-      toast.success("Copied to clipboard");
-    } else {
-      throw new Error("Copy command failed");
-    }
+    return success;
   } catch (error) {
     console.error("Copy failed:", error);
-    toast.error("Failed to copy to clipboard");
-    throw error;
+    return false;
   }
 }
