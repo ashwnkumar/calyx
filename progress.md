@@ -1198,3 +1198,129 @@ _This file is automatically maintained as development progresses. Each significa
 - Users can now edit project descriptions inline without leaving the details page
 - Consistent UX pattern with name editing
 - Supports both filled and empty descriptions gracefully
+
+### 2026-02-28 - Mobile Responsive Design Improvements
+
+**Comprehensive Responsiveness Audit:**
+
+- Reviewed entire application for mobile screen compatibility (320px+)
+- Identified and fixed layout issues across all major pages and components
+- Implemented consistent responsive patterns using Tailwind breakpoints
+
+**Layout & Container Fixes:**
+
+- Updated main app layout (`app/(app)/layout.tsx`):
+  - Responsive padding: `px-4 sm:px-6`, `py-4 sm:py-6`
+  - Responsive spacing: `space-y-3 sm:space-y-4`
+- Enhanced app header (`components/app-header.tsx`):
+  - Responsive logo sizing: `text-xl sm:text-2xl`
+  - Responsive padding: `p-3 sm:p-4`, `px-4 sm:px-6`
+  - Tighter gaps on mobile: `gap-2 sm:gap-4`
+- Updated app footer (`components/app-footer.tsx`):
+  - Flex direction switch: `flex-col sm:flex-row`
+  - Proper gap spacing for mobile stacking
+
+**Project Listing Page:**
+
+- Enhanced `ProjectListingClient` component:
+  - Responsive header layout: `flex-col sm:flex-row`
+  - Full-width button on mobile: `w-full sm:w-auto`
+  - Responsive title sizing: `text-2xl sm:text-3xl`
+  - Responsive spacing: `space-y-4 sm:space-y-6`
+- Updated `ProjectGrid` component:
+  - Earlier breakpoint: `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3`
+  - Responsive gap: `gap-3 sm:gap-4`
+- Enhanced `ProjectCard` component:
+  - Responsive title sizing: `text-lg sm:text-xl`
+  - Proper text wrapping with `break-words`
+
+**Project Details Page:**
+
+- Enhanced `ProjectDetailsClient` component:
+  - Responsive container padding: `px-4 sm:px-6`, `py-4 sm:py-6`
+  - Flexible header layout: `flex-col sm:flex-row`
+  - Responsive title sizing: `text-2xl sm:text-3xl`
+  - Title truncation with `min-w-0` and `truncate`
+  - Full-width "Add" button on mobile: `w-full sm:w-auto`
+  - Responsive grid: `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3`
+  - Responsive spacing: `gap-3 sm:gap-4`
+
+**Environment File Details Page:**
+
+- Enhanced `EnvFileDetailsClient` component:
+  - Responsive container padding: `px-4 sm:px-6`, `py-4 sm:py-6`
+  - Flexible header with back button: proper alignment with `items-start`
+  - Responsive title sizing: `text-xl sm:text-2xl lg:text-3xl`
+  - Title truncation to prevent overflow
+  - Responsive action buttons:
+    - Wrap on mobile with `flex-wrap`
+    - Icon-only on mobile (hide text labels): `hidden sm:inline`
+    - Flexible sizing: `flex-1 sm:flex-none`
+    - Smaller button size on mobile: `size="sm"`
+  - Responsive content card:
+    - Smaller font sizes: `text-xs sm:text-sm`
+    - Responsive padding: `p-3 sm:p-4`
+    - Responsive textarea height: `min-h-[300px] sm:min-h-[400px]`
+
+**Environment Variable Components:**
+
+- Updated `EnvVariableCard` component:
+  - Responsive padding: `p-3 sm:p-4`
+  - Side-by-side buttons on desktop: `flex-col sm:flex-row`
+  - Flexible button sizing: `flex-1` on mobile
+- Enhanced `EnvVariableTable` component:
+  - Horizontal scroll wrapper: `overflow-x-auto`
+  - Responsive font sizes: `text-xs sm:text-sm`
+
+**Touch Device Improvements:**
+
+- Fixed hover-only edit buttons for mobile:
+  - Changed pattern from `opacity-0 group-hover:opacity-100`
+  - To: `sm:opacity-0 sm:group-hover:opacity-100`
+  - Edit buttons now always visible on mobile (no hover state)
+  - Desktop retains hover-to-reveal behavior
+- Applied to:
+  - Project name edit button
+  - Project description edit button
+  - Environment file name edit button
+
+**Typography & Spacing:**
+
+- Consistent responsive heading sizes across all pages
+- Responsive spacing between sections
+- Proper text truncation to prevent overflow
+- Responsive padding and margins throughout
+
+**Files Modified:**
+
+- `app/(app)/layout.tsx` - Responsive padding and spacing
+- `components/app-header.tsx` - Responsive logo and gaps
+- `components/app-footer.tsx` - Flex direction switch
+- `components/projects/project-listing-client.tsx` - Responsive header and button
+- `components/projects/project-grid.tsx` - Earlier breakpoint
+- `components/projects/project-card.tsx` - Responsive title sizing
+- `components/env-variables/project-details-client.tsx` - Comprehensive mobile layout
+- `components/env-variables/env-file-details-client.tsx` - Responsive header and buttons
+- `components/env-variables/env-variable-card.tsx` - Responsive padding and buttons
+- `components/env-variables/env-variable-table.tsx` - Horizontal scroll
+
+**Responsive Breakpoints Used:**
+
+- `sm:` (640px) - Primary mobile-to-tablet breakpoint
+- `md:` (768px) - Tablet breakpoint (used sparingly)
+- `lg:` (1024px) - Desktop breakpoint for 3-column grids
+
+**Status Update:**
+
+- Mobile Layout: ✅ Complete (320px+ support)
+- Touch Interactions: ✅ Complete (always-visible edit buttons)
+- Responsive Typography: ✅ Complete (scaled heading sizes)
+- Responsive Spacing: ✅ Complete (consistent padding/margins)
+- Horizontal Overflow: ✅ Complete (tables and long content)
+
+**Key Achievement:**
+
+- Application now fully responsive from 320px mobile screens to large desktops
+- Touch-friendly interactions with always-visible controls on mobile
+- Consistent responsive patterns across all pages and components
+- Proper text truncation and overflow handling prevents layout breaks
