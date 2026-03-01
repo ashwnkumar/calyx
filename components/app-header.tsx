@@ -14,7 +14,7 @@ export function AppHeader() {
         </Link>
         <div className="flex items-center gap-2 sm:gap-4">
           <Button asChild variant="ghost" size="sm">
-            <Link href="/home">
+            <Link href="/">
               <Info className="size-4 sm:mr-2" />
               <span className="hidden sm:inline">Home</span>
             </Link>
