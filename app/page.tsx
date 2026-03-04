@@ -1,6 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Lock, Shield, Zap, FileKey, Download, Clock } from "lucide-react";
+import {
+  Lock,
+  Shield,
+  Zap,
+  FileKey,
+  Download,
+  Clock,
+  History,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/server";
@@ -141,6 +149,23 @@ export default async function HomePage() {
                 </p>
               </CardContent>
             </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <History className="size-5 text-primary" />
+                  Version Control Built-In
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">
+                  Every change is automatically tracked. View complete version
+                  history, see line-by-line diffs between versions, and restore
+                  previous versions with one click. Your audit trail is always
+                  encrypted.
+                </p>
+              </CardContent>
+            </Card>
           </div>
         </section>
 
@@ -202,6 +227,15 @@ export default async function HomePage() {
                 </p>
               </div>
             </div>
+            <div className="flex gap-3">
+              <History className="size-5 text-primary shrink-0 mt-0.5" />
+              <div>
+                <h3 className="font-semibold mb-1">Version control</h3>
+                <p className="text-sm text-muted-foreground">
+                  Track changes and restore previous versions
+                </p>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -226,6 +260,9 @@ export default async function HomePage() {
             </li>
             <li className="text-base sm:text-lg">
               Copy or download - Get your env vars back instantly
+            </li>
+            <li className="text-base sm:text-lg">
+              View version history - See all changes with line-by-line diffs
             </li>
             <li className="text-base sm:text-lg">
               Lock when done - Encryption key is cleared from memory

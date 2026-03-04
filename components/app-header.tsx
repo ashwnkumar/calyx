@@ -3,7 +3,7 @@ import { ThemeSwitcher } from "@/components/theme-switcher";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Suspense } from "react";
-import { Info } from "lucide-react";
+import { Info, Settings } from "lucide-react";
 
 export function AppHeader() {
   return (
@@ -17,6 +17,12 @@ export function AppHeader() {
             <Link href="/">
               <Info className="size-4 sm:mr-2" />
               <span className="hidden sm:inline">Home</span>
+            </Link>
+          </Button>
+          <Button asChild variant="ghost" size="sm">
+            <Link href="/settings">
+              <Settings className="size-4 sm:mr-2" />
+              <span className="hidden sm:inline">Settings</span>
             </Link>
           </Button>
           <ThemeSwitcher />

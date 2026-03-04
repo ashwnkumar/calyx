@@ -176,3 +176,158 @@ export async function deleteEnvFiles(
     data: { count: count ?? 0 },
   };
 }
+
+/**
+ * Environment variable version record from database
+ */
+type EnvVarVersion = {
+  id: string;
+  env_var_id: string;
+  version_number: number;
+  change_type: "created" | "updated" | "deleted";
+  changed_at: string;
+  change_note: string | null;
+  name: string;
+  iv: string;
+  ciphertext: string;
+};
+
+/**
+ * Server Action: Get version history for an environment variable
+ *
+ * @param envVarId - UUID of the environment variable
+ * @returns ActionResult with array of version records or error message
+ */
+export async function getEnvVarHistory(
+  envVarId: string,
+): Promise<ActionResult<EnvVarVersion[]>> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  const { data, error } = await supabase
+    .from("env_var_versions")
+    .select("*")
+    .eq("env_var_id", envVarId)
+    .eq("user_id", user.id)
+    .order("version_number", { ascending: false });
+
+  if (error) {
+    console.error("Failed to fetch version history:", error);
+    return { success: false, error: "Failed to load version history" };
+  }
+
+  return { success: true, data: data as EnvVarVersion[] };
+}
+
+/**
+ * Server Action: Get a specific version of an environment variable
+ *
+ * @param versionId - UUID of the version record
+ * @returns ActionResult with version record or error message
+ */
+export async function getEnvVarVersion(
+  versionId: string,
+): Promise<ActionResult<EnvVarVersion>> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  const { data, error } = await supabase
+    .from("env_var_versions")
+    .select("*")
+    .eq("id", versionId)
+    .eq("user_id", user.id)
+    .single();
+
+  if (error) {
+    console.error("Failed to fetch version:", error);
+    return { success: false, error: "Version not found" };
+  }
+
+  return { success: true, data: data as EnvVarVersion };
+}
+
+/**
+ * Server Action: Restore an environment variable to a previous version
+ *
+ * @param envVarId - UUID of the environment variable to restore
+ * @param versionId - UUID of the version to restore from
+ * @returns ActionResult with success status or error message
+ */
+export async function restoreEnvVarVersion(
+  envVarId: string,
+  versionId: string,
+): Promise<ActionResult<{ restored: boolean }>> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  // Get the version data
+  const { data: version, error: versionError } = await supabase
+    .from("env_var_versions")
+    .select("name, iv, ciphertext, env_var_id")
+    .eq("id", versionId)
+    .eq("user_id", user.id)
+    .single();
+
+  if (versionError || !version) {
+    return { success: false, error: "Version not found" };
+  }
+
+  // Verify the version belongs to the specified env_var
+  if (version.env_var_id !== envVarId) {
+    return { success: false, error: "Version mismatch" };
+  }
+
+  // Update current env_var (trigger will create new version automatically)
+  const { error: updateError } = await supabase
+    .from("env_vars")
+    .update({
+      name: version.name,
+      iv: version.iv,
+      ciphertext: version.ciphertext,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", envVarId)
+    .eq("user_id", user.id);
+
+  if (updateError) {
+    console.error("Failed to restore version:", updateError);
+    return { success: false, error: "Failed to restore version" };
+  }
+
+  // Get project_id for revalidation
+  const { data: envVar } = await supabase
+    .from("env_vars")
+    .select("project_id")
+    .eq("id", envVarId)
+    .single();
+
+  if (envVar?.project_id) {
+    revalidatePath(`/projects/${envVar.project_id}`);
+  }
+
+  return { success: true, data: { restored: true } };
+}

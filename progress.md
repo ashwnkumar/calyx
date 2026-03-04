@@ -1625,3 +1625,220 @@ _This file is automatically maintained as development progresses. Each significa
 
 - Cleaner authentication flow with single redirect
 - Users land directly on dashboard after login
+
+### 2026-03-04 - Environment Variable Version Control System
+
+**Version Control Implementation:**
+
+- Added automatic version tracking for all environment variable changes:
+  - Database trigger creates version snapshots on INSERT/UPDATE operations
+  - Versions stored in `env_var_versions` table with encrypted data
+  - Each version includes: version_number, change_type (created/updated/deleted), timestamp
+  - RLS policies enforce user-only access to version history
+- Created version history server actions (`app/(app)/projects/[id]/actions.ts`):
+  - `getEnvVarHistory()` - fetches all versions for an env var, ordered by version number
+  - `getEnvVarVersion()` - retrieves specific version with encrypted data
+  - `restoreEnvVarVersion()` - restores env var to previous version (creates new version automatically)
+  - All actions include authentication, ownership verification, and error handling
+
+**Dedicated Version History Page:**
+
+- Created full-page version history UI (`app/(app)/projects/[id]/env/[fileId]/history/page.tsx`):
+  - Two-column layout: version tree on left, file preview on right
+  - Better UX than dialog for viewing and comparing versions
+  - Dedicated route: `/projects/{projectId}/env/{fileId}/history`
+- Built `EnvFileHistoryClient` component (`components/env-variables/env-file-history-client.tsx`):
+  - Left panel: Scrollable version tree with all versions
+  - Right panel: Full file preview with syntax highlighting
+  - Click any version to instantly preview its content
+  - Auto-selects current version on page load
+  - Restore button for non-current versions
+- Enhanced `EnvFileDetailsClient` component:
+  - History button now navigates to dedicated history page
+  - Removed dialog-based version history
+  - Cleaner action bar with consistent navigation
+
+**Version Tree Features:**
+
+- **Visual Timeline**: Vertical list of all versions with clear hierarchy
+- **Version Numbers**: Sequential numbering (v1, v2, v3...)
+- **Current Badge**: Highlights the active version
+- **Change Type Badges**: Color-coded indicators (Created/Updated/Deleted)
+- **Relative Timestamps**: Human-readable time (e.g., "2 hours ago")
+- **Active Selection**: Selected version highlighted with primary border
+- **Hover States**: Smooth transitions for better interactivity
+
+**File Preview Panel:**
+
+- **Large Preview Area**: Full-width display for better readability
+- **Decrypted Content**: Shows plaintext when unlocked (monospace font)
+- **Encrypted Fallback**: Shows ciphertext preview when locked
+- **Restore Action**: One-click restore with confirmation
+- **Loading States**: Smooth decryption feedback
+- **Responsive Layout**: Stacks vertically on mobile, side-by-side on desktop
+
+**User Flow:**
+
+1. Navigate to env file detail page
+2. Click "History" button in action bar
+3. See version tree on left with all historical versions
+4. Click any version to preview its content on right
+5. Compare different versions by clicking through the tree
+6. Click "Restore" to revert to a previous version
+7. Confirmation prompt prevents accidental changes
+8. Redirects back to file detail page after restore
+
+**Visual Design:**
+
+- Card-based layout for clean separation
+- Version tree uses button elements for accessibility
+- Selected version has primary border accent
+- Preview panel shows full file content with scrolling
+- Responsive grid: single column on mobile, two columns on desktop
+- Consistent spacing and typography throughout
+
+**Security Considerations:**
+
+- ✅ All version data encrypted with same AES-GCM-256 standard
+- ✅ Decryption only when user explicitly selects version
+- ✅ Requires unlock state to view decrypted content
+- ✅ RLS policies prevent cross-user version access
+- ✅ No plaintext exposure in version history
+- ✅ Restore operation creates new version (audit trail preserved)
+
+**Files Created/Modified:**
+
+- `app/(app)/projects/[id]/env/[fileId]/history/page.tsx` - New history page route
+- `components/env-variables/env-file-history-client.tsx` - New history page component
+- `app/(app)/projects/[id]/actions.ts` - Added 3 version control server actions
+- `components/env-variables/env-file-details-client.tsx` - Updated to link to history page
+- `components/env-variables/version-history-dialog.tsx` - Created but not used (replaced by page)
+
+**Database Schema:**
+
+- `env_var_versions` table with columns: id, env_var_id, user_id, project_id, name, iv, ciphertext, version_number, change_type, changed_at, change_note
+- Trigger: `env_var_version_trigger` on `env_vars` table (AFTER INSERT OR UPDATE)
+- Function: `create_env_var_version()` handles automatic version creation
+- Indexes on env_var_id and project_id for query performance
+
+**Status Update:**
+
+- Version Control: ✅ Complete (automatic tracking via database trigger)
+- Version History Page: ✅ Complete (dedicated route with two-column layout)
+- Version Tree UI: ✅ Complete (interactive timeline with selection)
+- File Preview: ✅ Complete (full content display with decrypt)
+- Version Restore: ✅ Complete (revert to previous version with confirmation)
+- Audit Trail: ✅ Complete (complete history with timestamps and change types)
+
+**Key Achievement:**
+
+- Full version control system with dedicated page for better UX
+- Two-column layout provides excellent version comparison experience
+- Version tree on left allows quick navigation through history
+- Large preview panel on right shows full file content
+- Automatic tracking via database trigger requires no code changes
+- Maintains zero-knowledge security with client-side decryption only
+
+**Location:**
+
+- Version history accessible from env file detail page
+- Click "History" button in action bar (between Download and Edit)
+- Opens dedicated page at `/projects/{projectId}/env/{fileId}/history`
+- Version tree on left, file preview on right
+- Toggle between "Preview" and "Diff" modes in the header
+- Back button returns to file detail page
+
+### 2026-03-04 - Version Diff View Enhancement
+
+**Diff View Implementation:**
+
+- Added line-by-line diff comparison between versions:
+  - Created `lib/diff-utils.ts` with diff generation algorithm
+  - Simple LCS (Longest Common Subsequence) approach for line comparison
+  - Identifies added, removed, and unchanged lines
+  - Provides diff statistics (count of additions/removals)
+- Enhanced version history page with view mode toggle:
+  - "Preview" mode: Shows full file content (existing behavior)
+  - "Diff" mode: Shows line-by-line comparison with previous version
+  - Toggle buttons in card header for easy switching
+  - Diff mode disabled for first version (no previous version to compare)
+
+**Diff View Features:**
+
+- **Color-Coded Lines**:
+  - Green background for added lines (+ prefix)
+  - Red background for removed lines (- prefix)
+  - Default background for unchanged lines (no prefix)
+  - Dark mode support with adjusted colors
+- **Diff Statistics**: Shows count of added/removed lines at top
+- **Version Comparison Label**: Displays "Comparing v1 → v2" format
+- **Line Prefixes**: Visual indicators (+, -, space) for each line type
+- **Scrollable View**: Max height with overflow for long diffs
+- **Monospace Font**: Consistent with code preview
+- **Auto-Generate**: Diff generated automatically when switching to diff mode
+
+**User Flow:**
+
+1. Navigate to version history page
+2. Select any version from the tree
+3. Click "Diff" button in header to switch to diff view
+4. See line-by-line comparison with previous version
+5. Green lines show additions, red lines show removals
+6. Statistics at top show total changes
+7. Click "Preview" to switch back to full file view
+
+**Visual Design:**
+
+- Toggle buttons styled as segmented control
+- Active mode highlighted with default variant
+- Diff lines use semantic colors (green/red)
+- Line prefixes aligned in fixed-width column
+- Bordered container for diff view
+- Responsive text sizing (xs on mobile, sm on desktop)
+
+**Technical Implementation:**
+
+- `generateDiff()`: Core diff algorithm comparing two strings
+- `getDiffStats()`: Calculates addition/removal counts
+- `DiffLine` type: Represents each line with type and content
+- Automatic diff generation when mode changes
+- Decrypts previous version on-demand for comparison
+- Handles edge cases (no previous version, decryption errors)
+
+**Files Created/Modified:**
+
+- `lib/diff-utils.ts` - New diff utility with algorithm and types
+- `components/env-variables/env-file-history-client.tsx` - Added diff view mode
+
+**Status Update:**
+
+- Diff View: ✅ Complete (line-by-line comparison with previous version)
+- View Mode Toggle: ✅ Complete (seamless switching between preview and diff)
+- Diff Statistics: ✅ Complete (addition/removal counts)
+- Color Coding: ✅ Complete (semantic colors for added/removed lines)
+
+**Key Achievement:**
+
+- Users can now see exactly what changed between versions
+- Line-by-line diff with color coding makes changes obvious
+- Toggle between full preview and diff view for flexibility
+- Automatic comparison with previous version simplifies workflow
+
+### 2026-03-04 - Change Passphrase Feature
+
+**Security Enhancement:**
+
+- Added `changePassphrase` function to `SecretContext` for secure passphrase rotation
+- Implemented re-encryption flow: verify old passphrase → derive new key → re-encrypt all env_vars → update test_ciphertext
+- Created `ChangePassphraseDialog` component with validation (min 8 chars, confirmation match)
+- Built settings page (`app/(app)/settings/page.tsx`) with security card
+- Added Settings link to `AppHeader` navigation
+- Maintains zero-knowledge architecture: all re-encryption happens client-side
+- Batch updates all user's encrypted environment variables atomically
+
+**Files Modified:**
+
+- `lib/contexts/SecretContext.tsx` - Added changePassphrase method
+- `components/change-passphrase-dialog.tsx` - New dialog component
+- `app/(app)/settings/page.tsx` - New settings page
+- `components/app-header.tsx` - Added Settings navigation link
