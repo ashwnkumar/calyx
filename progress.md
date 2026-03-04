@@ -1823,3 +1823,22 @@ _This file is automatically maintained as development progresses. Each significa
 - Line-by-line diff with color coding makes changes obvious
 - Toggle between full preview and diff view for flexibility
 - Automatic comparison with previous version simplifies workflow
+
+### 2026-03-04 - Change Passphrase Feature
+
+**Security Enhancement:**
+
+- Added `changePassphrase` function to `SecretContext` for secure passphrase rotation
+- Implemented re-encryption flow: verify old passphrase → derive new key → re-encrypt all env_vars → update test_ciphertext
+- Created `ChangePassphraseDialog` component with validation (min 8 chars, confirmation match)
+- Built settings page (`app/(app)/settings/page.tsx`) with security card
+- Added Settings link to `AppHeader` navigation
+- Maintains zero-knowledge architecture: all re-encryption happens client-side
+- Batch updates all user's encrypted environment variables atomically
+
+**Files Modified:**
+
+- `lib/contexts/SecretContext.tsx` - Added changePassphrase method
+- `components/change-passphrase-dialog.tsx` - New dialog component
+- `app/(app)/settings/page.tsx` - New settings page
+- `components/app-header.tsx` - Added Settings navigation link

@@ -22,6 +22,10 @@ type SecretState = {
 type SecretActions = {
   unlock: (passphrase: string) => Promise<void>;
   lock: () => void;
+  changePassphrase: (
+    oldPassphrase: string,
+    newPassphrase: string,
+  ) => Promise<void>;
 };
 
 type SecretContextValue = SecretState & SecretActions;
@@ -103,6 +107,100 @@ export function SecretProvider({ children }: { children: ReactNode }) {
     setIsUnlocked(false);
     toast.info("Secrets locked");
   }, []);
+
+  const changePassphrase = useCallback(
+    async (oldPassphrase: string, newPassphrase: string) => {
+      try {
+        const supabase = createClient();
+
+        // 1. Fetch profile with salt
+        const { data: profile, error: profileError } = await supabase
+          .from("profiles")
+          .select("encryption_salt, test_iv, test_ciphertext")
+          .single();
+
+        if (profileError) throw profileError;
+        if (!profile?.encryption_salt)
+          throw new Error("No encryption salt found");
+
+        // 2. Verify old passphrase
+        const oldKey = await deriveKey(oldPassphrase, profile.encryption_salt);
+
+        if (profile.test_iv && profile.test_ciphertext) {
+          const decryptedTest = await decrypt(
+            profile.test_iv,
+            profile.test_ciphertext,
+            oldKey,
+          );
+
+          if (decryptedTest !== "UNLOCK_OK") {
+            throw new Error("Current passphrase is incorrect");
+          }
+        }
+
+        // 3. Derive new key
+        const newKey = await deriveKey(newPassphrase, profile.encryption_salt);
+
+        // 4. Fetch all env_vars for this user
+        const { data: envVars, error: envError } = await supabase
+          .from("env_vars")
+          .select("id, iv, ciphertext");
+
+        if (envError) throw envError;
+
+        // 5. Re-encrypt each env_var with new key
+        const updates = await Promise.all(
+          (envVars || []).map(async (v) => {
+            const plaintext = await decrypt(v.iv, v.ciphertext, oldKey);
+            const { iv, ciphertext } = await encrypt(plaintext, newKey);
+            return { id: v.id, iv, ciphertext };
+          }),
+        );
+
+        // 6. Create new test_ciphertext with new key
+        const { iv: newTestIv, ciphertext: newTestCiphertext } = await encrypt(
+          "UNLOCK_OK",
+          newKey,
+        );
+
+        // 7. Batch update all env_vars
+        if (updates.length > 0) {
+          for (const update of updates) {
+            const { error: updateError } = await supabase
+              .from("env_vars")
+              .update({ iv: update.iv, ciphertext: update.ciphertext })
+              .eq("id", update.id);
+
+            if (updateError) throw updateError;
+          }
+        }
+
+        // 8. Update profile with new test values
+        const { error: profileUpdateError } = await supabase
+          .from("profiles")
+          .update({
+            test_iv: newTestIv,
+            test_ciphertext: newTestCiphertext,
+          })
+          .eq("id", (await supabase.auth.getUser()).data.user?.id);
+
+        if (profileUpdateError) throw profileUpdateError;
+
+        // 9. Update in-memory key
+        setCryptoKey(newKey);
+        setIsUnlocked(true);
+
+        toast.success("Passphrase changed successfully");
+      } catch (err) {
+        console.error("Change passphrase failed:", err);
+        toast.error(
+          err instanceof Error ? err.message : "Failed to change passphrase",
+        );
+        throw err;
+      }
+    },
+    [],
+  );
 
   // Query profile on mount to detect passphrase setup status
   useEffect(() => {
@@ -190,6 +288,7 @@ export function SecretProvider({ children }: { children: ReactNode }) {
         isLoading,
         unlock,
         lock,
+        changePassphrase,
       }}
     >
       {children}
