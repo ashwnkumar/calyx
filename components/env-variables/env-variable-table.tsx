@@ -8,6 +8,7 @@ import {
   Download,
   AlertCircle,
   Search,
+  History,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -32,6 +33,7 @@ import { decrypt } from "@/lib/crypto";
 import { copyToClipboard } from "@/lib/clipboard-utils";
 import { isValidBase64 } from "@/lib/download-utils";
 import { toast } from "sonner";
+import { VersionHistoryDialog } from "./version-history-dialog";
 
 type EnvVariable = {
   id: string;
@@ -69,6 +71,7 @@ function EnvVariableRow({
 }: EnvVariableRowProps) {
   const { isUnlocked, cryptoKey } = useSecrets();
   const [decryptedValue, setDecryptedValue] = useState<string | null>(null);
+  const [showVersionHistory, setShowVersionHistory] = useState(false);
 
   const formattedDate = formatDistanceToNow(new Date(envVar.created_at), {
     addSuffix: true,
@@ -175,81 +178,102 @@ function EnvVariableRow({
   ]);
 
   return (
-    <TableRow className={isSelected ? "bg-muted/50" : ""}>
-      {selectionMode && onSelectionChange && (
-        <TableCell className="w-12">
-          <Checkbox
-            checked={isSelected}
-            onCheckedChange={(checked) =>
-              onSelectionChange(envVar.id, checked === true)
-            }
-            aria-label={`Select ${envVar.key}`}
-          />
-        </TableCell>
-      )}
-      <TableCell>
-        <div className="flex items-center gap-2">
-          {!isValidData && <AlertCircle className="h-4 w-4 text-destructive" />}
-          <code className="text-sm font-medium">{envVar.key}</code>
-        </div>
-      </TableCell>
-      <TableCell className="max-w-md">
-        {isUnlocked ? (
+    <>
+      <TableRow className={isSelected ? "bg-muted/50" : ""}>
+        {selectionMode && onSelectionChange && (
+          <TableCell className="w-12">
+            <Checkbox
+              checked={isSelected}
+              onCheckedChange={(checked) =>
+                onSelectionChange(envVar.id, checked === true)
+              }
+              aria-label={`Select ${envVar.key}`}
+            />
+          </TableCell>
+        )}
+        <TableCell>
           <div className="flex items-center gap-2">
-            {decryptedValue && decryptedValue.length > 35 ? (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <code className="text-sm break-all flex-1 cursor-help">
-                    {decryptedValue.substring(0, 35)}...
-                  </code>
-                </TooltipTrigger>
-                <TooltipContent className="max-w-md break-all">
-                  <p className="font-mono text-xs">{decryptedValue}</p>
-                </TooltipContent>
-              </Tooltip>
-            ) : (
-              <code className="text-sm break-all flex-1">
-                {decryptedValue || "••••••••"}
-              </code>
+            {!isValidData && (
+              <AlertCircle className="h-4 w-4 text-destructive" />
             )}
-            <div className="flex gap-1">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleCopyDecrypted}
-                disabled={!decryptedValue}
-                title="Copy KEY=VALUE"
-              >
-                <Copy className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleDownloadDecrypted}
-                disabled={!decryptedValue}
-                title="Download as .env"
-              >
-                <Download className="h-4 w-4" />
-              </Button>
-            </div>
+            <code className="text-sm font-medium">{envVar.key}</code>
           </div>
-        ) : (
-          <code className="text-sm text-muted-foreground break-all">
-            {envVar.ciphertext.substring(0, 40)}...
-          </code>
-        )}
-      </TableCell>
-      <TableCell className="text-center">
-        {isUnlocked ? (
-          <LockOpen className="h-4 w-4 text-muted-foreground inline" />
-        ) : (
-          <Lock className="h-4 w-4 text-muted-foreground inline" />
-        )}
-      </TableCell>
-      <TableCell className="text-muted-foreground text-sm">
-        {formattedDate}
-      </TableCell>
-    </TableRow>
+        </TableCell>
+        <TableCell className="max-w-md">
+          {isUnlocked ? (
+            <div className="flex items-center gap-2">
+              {decryptedValue && decryptedValue.length > 35 ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <code className="text-sm break-all flex-1 cursor-help">
+                      {decryptedValue.substring(0, 35)}...
+                    </code>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-md break-all">
+                    <p className="font-mono text-xs">{decryptedValue}</p>
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                <code className="text-sm break-all flex-1">
+                  {decryptedValue || "••••••••"}
+                </code>
+              )}
+              <div className="flex gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleCopyDecrypted}
+                  disabled={!decryptedValue}
+                  title="Copy KEY=VALUE"
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleDownloadDecrypted}
+                  disabled={!decryptedValue}
+                  title="Download as .env"
+                >
+                  <Download className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <code className="text-sm text-muted-foreground break-all">
+              {envVar.ciphertext.substring(0, 40)}...
+            </code>
+          )}
+        </TableCell>
+        <TableCell className="text-center">
+          {isUnlocked ? (
+            <LockOpen className="h-4 w-4 text-muted-foreground inline" />
+          ) : (
+            <Lock className="h-4 w-4 text-muted-foreground inline" />
+          )}
+        </TableCell>
+        <TableCell className="text-muted-foreground text-sm">
+          {formattedDate}
+        </TableCell>
+        <TableCell>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setShowVersionHistory(true)}
+            title="View version history"
+          >
+            <History className="h-4 w-4" />
+          </Button>
+        </TableCell>
+      </TableRow>
+
+      <VersionHistoryDialog
+        envVarId={envVar.id}
+        envVarKey={envVar.key}
+        open={showVersionHistory}
+        onOpenChange={setShowVersionHistory}
+      />
+    </>
   );
 }
 
@@ -348,6 +372,7 @@ export function EnvVariableTable({
                 <TableHead className="max-w-md">Value</TableHead>
                 <TableHead className="text-center">Status</TableHead>
                 <TableHead>Created</TableHead>
+                <TableHead className="w-16">History</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -366,7 +391,7 @@ export function EnvVariableTable({
               ) : (
                 <TableRow>
                   <TableCell
-                    colSpan={selectionMode ? 5 : 4}
+                    colSpan={selectionMode ? 6 : 5}
                     className="text-center py-8 text-muted-foreground"
                   >
                     No environment variables match your search

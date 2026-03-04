@@ -26,6 +26,9 @@ So I built Calyx - a simple, secure way to store and access my environment varia
 - 📋 **Quick copy** - Copy individual variables or entire files
 - 💾 **Download options** - Get your `.env` files back in their original format
 - 🔓 **Smart locking** - Auto-lock on inactivity or when you switch tabs
+- 📜 **Version control** - Track changes to your env files with full history
+- 🔍 **Diff view** - See exactly what changed between versions
+- ⏮️ **Version restore** - Roll back to any previous version
 - 🎨 **Clean UI** - Built with shadcn/ui and Tailwind CSS
 - 📱 **Fully responsive** - Works on mobile, tablet, and desktop
 
@@ -48,7 +51,8 @@ So I built Calyx - a simple, secure way to store and access my environment varia
 4. **Set up your passphrase** (first time only)
 5. **Unlock when needed** - Your secrets decrypt in the browser
 6. **Copy or download** - Get your env vars back instantly
-7. **Lock when done** - Encryption key is cleared from memory
+7. **View history** - See all changes with version control and diffs
+8. **Lock when done** - Encryption key is cleared from memory
 
 ## Security Details
 
@@ -108,13 +112,16 @@ npm run dev
 
 ## Database Schema
 
-The app uses three main tables:
+The app uses four main tables:
 
 - **profiles** - User encryption salts and test ciphertext
 - **projects** - Your project containers
 - **env_vars** - Encrypted environment files
+- **env_var_versions** - Version history for all changes (automatic tracking)
 
 All tables use Row Level Security (RLS) to ensure data isolation.
+
+Database triggers automatically create version snapshots whenever you update an env file, giving you a complete audit trail without any extra work.
 
 See `.kiro/steering/supabase-schema.md` for the complete schema.
 
