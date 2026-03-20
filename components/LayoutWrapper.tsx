@@ -1,4 +1,4 @@
-'use client';
+"use client";
 import React from "react";
 import { ThemeProvider, useTheme } from "next-themes";
 import { Toaster, ToasterProps } from "sonner";
@@ -13,10 +13,7 @@ function LayoutWrapper({ children }: { children: React.ReactNode }) {
       disableTransitionOnChange
     >
       {children}
-      <Toaster
-        position="top-right"
-        theme={resolvedTheme as ToasterProps["theme"]}
-      />
+      <Toaster position="top-right" />
     </ThemeProvider>
   );
 }
