@@ -55,17 +55,12 @@ export function RegisterForm({
       const { error } = await supabase.auth.signUp({
         email,
         password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-        },
       });
 
       if (error) throw error;
 
-      toast.success(
-        "Account created! Please check your email to verify your account.",
-      );
-      router.push("/login");
+      toast.success("Account created successfully");
+      router.push("/dashboard");
     } catch (error: unknown) {
       const message =
         error instanceof Error ? error.message : "An error occurred";
@@ -125,7 +120,10 @@ export function RegisterForm({
               </Button>
               <div className="text-center text-sm">
                 Already have an account?{" "}
-                <a href="/login" className="underline text-primary underline-offset-4">
+                <a
+                  href="/login"
+                  className="underline text-primary underline-offset-4"
+                >
                   Login
                 </a>
               </div>
