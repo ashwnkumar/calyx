@@ -1,10 +1,9 @@
 "use client";
+import { ThemeProvider } from "next-themes";
 import React from "react";
-import { ThemeProvider, useTheme } from "next-themes";
-import { Toaster, ToasterProps } from "sonner";
+import { Toaster } from "./ui/sonner";
 
 function LayoutWrapper({ children }: { children: React.ReactNode }) {
-  const { resolvedTheme } = useTheme();
   return (
     <ThemeProvider
       attribute="class"
