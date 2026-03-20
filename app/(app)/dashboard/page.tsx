@@ -19,7 +19,7 @@ export default async function DashboardPage() {
     .select(
       "id, user_id, name, description, created_at, updated_at, env_vars(count)",
     )
-    .order("created_at", { ascending: false });
+    .order("updated_at", { ascending: false });
 
   if (error) {
     return <ErrorState message={error.message} />;

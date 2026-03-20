@@ -13,13 +13,13 @@ export function AppHeader() {
           Calyx
         </Link>
         <div className="flex items-center gap-2 sm:gap-4">
-          <Button asChild variant="ghost" size="sm">
+          <Button asChild variant="outline" size="sm">
             <Link href="/">
               <Info className="size-4 sm:mr-2" />
               <span className="hidden sm:inline">Home</span>
             </Link>
           </Button>
-          <Button asChild variant="ghost" size="sm">
+          <Button asChild variant="outline" size="sm">
             <Link href="/settings">
               <Settings className="size-4 sm:mr-2" />
               <span className="hidden sm:inline">Settings</span>

@@ -265,7 +265,7 @@ export function ProjectDetailsClient({
       <div className="mb-4 sm:mb-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 mb-4">
           <Button
-            variant="ghost"
+            variant="outline"
             size="icon"
             onClick={() => router.push("/dashboard")}
             aria-label="Back to projects"
@@ -312,7 +312,7 @@ export function ProjectDetailsClient({
                   variant="ghost"
                   size="icon"
                   onClick={handleEditNameClick}
-                  className="sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
+                  className="transition-opacity"
                   aria-label="Edit project name"
                 >
                   <Pencil className="h-4 w-4" />
@@ -364,7 +364,7 @@ export function ProjectDetailsClient({
                   variant="ghost"
                   size="icon"
                   onClick={handleEditDescriptionClick}
-                  className="sm:opacity-0 sm:group-hover:opacity-100 transition-opacity h-6 w-6"
+                  className="transition-opacity h-6 w-6"
                   aria-label="Edit project description"
                 >
                   <Pencil className="h-3 w-3" />

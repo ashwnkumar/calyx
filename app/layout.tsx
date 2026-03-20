@@ -1,7 +1,6 @@
+import LayoutWrapper from "@/components/LayoutWrapper";
 import type { Metadata } from "next";
 import { Geist, Public_Sans } from "next/font/google";
-import { ThemeProvider } from "next-themes";
-import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
 const defaultUrl = process.env.VERCEL_URL
@@ -64,20 +63,15 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.className} ${fontSans.variable} antialiased`}
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          {children}
-          <Toaster />
-        </ThemeProvider>
+       <LayoutWrapper>
+        {children}
+       </LayoutWrapper>
       </body>
     </html>
   );

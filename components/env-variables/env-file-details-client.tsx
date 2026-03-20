@@ -290,7 +290,7 @@ export function EnvFileDetailsClient({
         {/* Back button and title row */}
         <div className="flex items-start gap-2 sm:gap-4 mb-3 sm:mb-4">
           <Button
-            variant="ghost"
+            variant="outline"
             size="icon"
             onClick={() => router.push(`/projects/${project.id}`)}
             aria-label="Back to project"
@@ -340,7 +340,7 @@ export function EnvFileDetailsClient({
                   variant="ghost"
                   size="icon"
                   onClick={handleEditNameClick}
-                  className="sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shrink-0"
+                  className=" transition-opacity shrink-0"
                   aria-label="Edit file name"
                 >
                   <Pencil className="h-4 w-4" />
@@ -361,7 +361,6 @@ export function EnvFileDetailsClient({
         {/* Action buttons - responsive layout */}
         <div className="flex flex-wrap gap-2 ml-0 sm:ml-14">
           <Button
-            variant="outline"
             onClick={handleCopy}
             className="gap-2 flex-1 sm:flex-none"
             size="sm"
@@ -370,16 +369,7 @@ export function EnvFileDetailsClient({
             <span className="hidden sm:inline">Copy</span>
           </Button>
           <Button
-            variant="outline"
-            onClick={handleDownload}
-            className="gap-2 flex-1 sm:flex-none"
-            size="sm"
-          >
-            <Download className="h-4 w-4" />
-            <span className="hidden sm:inline">Download</span>
-          </Button>
-          <Button
-            variant="outline"
+            variant="secondary"
             onClick={() =>
               router.push(
                 `/projects/${project.id}/env/${currentEnvFile.id}/history`,
@@ -390,6 +380,15 @@ export function EnvFileDetailsClient({
           >
             <History className="h-4 w-4" />
             <span className="hidden sm:inline">History</span>
+          </Button>{" "}
+          <Button
+            variant="outline"
+            onClick={handleDownload}
+            className="gap-2 flex-1 sm:flex-none"
+            size="sm"
+          >
+            <Download className="h-4 w-4" />
+            <span className="hidden sm:inline">Download</span>
           </Button>
           {isUnlocked && !isEditing && (
             <Button
