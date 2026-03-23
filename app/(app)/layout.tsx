@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { unstable_noStore as noStore } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { AppHeader } from "@/components/app-header";
 import { AppFooter } from "@/components/app-footer";
@@ -17,8 +16,6 @@ export default async function AppLayout({
 }: {
   children: React.ReactNode;
 }) {
-  noStore();
-
   const supabase = await createClient();
   const {
     data: { user },
@@ -33,7 +30,7 @@ export default async function AppLayout({
   return (
     <SecretProvider>
       <div className="min-h-screen flex flex-col">
-        <AppHeader />
+        <AppHeader isLoggedIn={true} />
         <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 py-4 sm:py-6 space-y-3 sm:space-y-4">
           <PassphraseStatusAlert />
           {children}

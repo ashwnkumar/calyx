@@ -2,10 +2,9 @@ import { AuthButton } from "@/components/auth-button";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Suspense } from "react";
 import { Info, Settings } from "lucide-react";
 
-export function AppHeader() {
+export function AppHeader({ isLoggedIn }: { isLoggedIn: boolean }) {
   return (
     <nav className="w-full border-b border-b-foreground/10">
       <div className="max-w-5xl mx-auto flex justify-between items-center p-3 sm:p-4 px-4 sm:px-6">
@@ -26,9 +25,7 @@ export function AppHeader() {
             </Link>
           </Button>
           <ThemeSwitcher />
-          <Suspense>
-            <AuthButton />
-          </Suspense>
+          <AuthButton isLoggedIn={isLoggedIn} />
         </div>
       </div>
     </nav>

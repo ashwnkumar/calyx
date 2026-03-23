@@ -1,4 +1,3 @@
-import { unstable_noStore as noStore } from "next/cache";
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { ProjectListingClient } from "@/components/projects/project-listing-client";
@@ -11,7 +10,6 @@ export const metadata: Metadata = {
 };
 
 export default async function DashboardPage() {
-  noStore();
   const supabase = await createClient();
 
   const { data: projects, error } = await supabase

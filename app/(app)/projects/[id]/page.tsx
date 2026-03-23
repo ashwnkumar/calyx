@@ -1,4 +1,3 @@
-import { unstable_noStore as noStore } from "next/cache";
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { ErrorState } from "@/components/projects/error-state";
@@ -38,9 +37,7 @@ export async function generateMetadata({
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
   const { id: projectId } = await params;
-  const supabase = await createClient();
 
-  // Validate UUID format
   if (!isValidUUID(projectId)) {
     return {
       title: "Invalid Project",
@@ -48,7 +45,7 @@ export async function generateMetadata({
     };
   }
 
-  // Fetch project name for metadata
+  const supabase = await createClient();
   const { data: project } = await supabase
     .from("projects")
     .select("name, description")
@@ -75,50 +72,46 @@ export default async function ProjectDetailsPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  noStore();
-
   const { id: projectId } = await params;
-  const supabase = await createClient();
 
-  // Validate UUID format
   if (!isValidUUID(projectId)) {
     return (
       <ErrorState message="Invalid project ID. Please check the URL and try again." />
     );
   }
 
-  // Fetch project metadata with RLS enforcement
-  const { data: project, error: projectError } = await supabase
-    .from("projects")
-    .select("id, name, description, created_at, updated_at")
-    .eq("id", projectId)
-    .single();
+  const supabase = await createClient();
 
-  // Handle project not found or access denied (RLS)
-  if (projectError || !project) {
+  // Fetch project and env_vars in parallel
+  const [projectResult, envResult] = await Promise.all([
+    supabase
+      .from("projects")
+      .select("id, name, description, created_at, updated_at")
+      .eq("id", projectId)
+      .single(),
+    supabase
+      .from("env_vars")
+      .select(
+        "id, project_id, user_id, name, iv, ciphertext, created_at, updated_at",
+      )
+      .eq("project_id", projectId)
+      .order("created_at", { ascending: false }),
+  ]);
+
+  if (projectResult.error || !projectResult.data) {
     return (
       <ErrorState message="Project not found or you don't have access to it." />
     );
   }
 
-  // Fetch env_vars (env files) for this project ordered by created_at (newest first)
-  const { data: envFiles, error: envError } = await supabase
-    .from("env_vars")
-    .select(
-      "id, project_id, user_id, name, iv, ciphertext, created_at, updated_at",
-    )
-    .eq("project_id", projectId)
-    .order("created_at", { ascending: false });
-
-  // Log error but continue with empty array rather than failing completely
-  if (envError) {
-    console.error("Failed to fetch env files:", envError);
+  if (envResult.error) {
+    console.error("Failed to fetch env files:", envResult.error);
   }
 
   return (
     <ProjectDetailsClient
-      project={project as Project}
-      initialEnvFiles={(envFiles as EnvFile[]) ?? []}
+      project={projectResult.data as Project}
+      initialEnvFiles={(envResult.data as EnvFile[]) ?? []}
     />
   );
 }
