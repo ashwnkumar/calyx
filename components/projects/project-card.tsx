@@ -99,6 +99,10 @@ export function ProjectCard({ project, onProjectDeleted }: ProjectCardProps) {
     addSuffix: true,
   });
 
+  const lastUpdatedDate = formatDistanceToNow(new Date(project.updated_at), {
+    addSuffix: true,
+  });
+
   // Extract count from the aggregated query result
   const envVarCount = project.env_vars?.[0]?.count ?? 0;
 
@@ -136,7 +140,10 @@ export function ProjectCard({ project, onProjectDeleted }: ProjectCardProps) {
             </CardDescription>
           )}
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex flex-col items-start ">
+          {/* <p className="text-sm text-muted-foreground">
+            Last Updated {lastUpdatedDate}
+          </p> */}
           <p className="text-sm text-muted-foreground">
             Created {formattedDate}
           </p>

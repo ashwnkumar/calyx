@@ -70,7 +70,14 @@ export function UnlockDialog({ open, onOpenChange }: UnlockDialogProps) {
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit}>
+        <div
+          role="form"
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && passphrase && !isSubmitting) {
+              handleSubmit(e as unknown as React.FormEvent);
+            }
+          }}
+        >
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="passphrase">Master Passphrase</Label>
@@ -79,6 +86,7 @@ export function UnlockDialog({ open, onOpenChange }: UnlockDialogProps) {
                 value={passphrase}
                 onChange={handlePassphraseChange}
                 placeholder="Enter your passphrase"
+                autoComplete="off"
                 autoFocus
                 disabled={isSubmitting}
                 aria-invalid={error ? "true" : "false"}
@@ -105,11 +113,15 @@ export function UnlockDialog({ open, onOpenChange }: UnlockDialogProps) {
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting || !passphrase}>
+            <Button
+              type="button"
+              onClick={handleSubmit}
+              disabled={isSubmitting || !passphrase}
+            >
               {isSubmitting ? "Unlocking..." : "Unlock"}
             </Button>
           </DialogFooter>
-        </form>
+        </div>
       </DialogContent>
     </Dialog>
   );

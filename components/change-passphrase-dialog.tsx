@@ -90,7 +90,20 @@ export function ChangePassphraseDialog() {
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-[425px]">
-          <form onSubmit={handleSubmit}>
+          <div
+            role="form"
+            onKeyDown={(e) => {
+              if (
+                e.key === "Enter" &&
+                oldPassphrase &&
+                newPassphrase &&
+                confirmPassphrase &&
+                !isSubmitting
+              ) {
+                handleSubmit(e as unknown as React.FormEvent);
+              }
+            }}
+          >
             <DialogHeader>
               <DialogTitle>Change Master Passphrase</DialogTitle>
               <DialogDescription>
@@ -105,7 +118,7 @@ export function ChangePassphraseDialog() {
                   id="old-passphrase"
                   value={oldPassphrase}
                   onChange={(e) => setOldPassphrase(e.target.value)}
-                  required
+                  autoComplete="off"
                   disabled={isSubmitting}
                 />
               </div>
@@ -115,8 +128,7 @@ export function ChangePassphraseDialog() {
                   id="new-passphrase"
                   value={newPassphrase}
                   onChange={(e) => setNewPassphrase(e.target.value)}
-                  required
-                  minLength={8}
+                  autoComplete="off"
                   disabled={isSubmitting}
                 />
               </div>
@@ -128,8 +140,7 @@ export function ChangePassphraseDialog() {
                   id="confirm-passphrase"
                   value={confirmPassphrase}
                   onChange={(e) => setConfirmPassphrase(e.target.value)}
-                  required
-                  minLength={8}
+                  autoComplete="off"
                   disabled={isSubmitting}
                 />
               </div>
@@ -143,11 +154,15 @@ export function ChangePassphraseDialog() {
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button
+                type="button"
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+              >
                 {isSubmitting ? "Changing..." : "Change Passphrase"}
               </Button>
             </DialogFooter>
-          </form>
+          </div>
         </DialogContent>
       </Dialog>
     </>

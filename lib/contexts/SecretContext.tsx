@@ -56,14 +56,20 @@ export function SecretProvider({ children }: { children: ReactNode }) {
 
       // Verify passphrase correctness if test value exists
       if (profile.test_iv && profile.test_ciphertext) {
-        const decryptedTest = await decrypt(
-          profile.test_iv,
-          profile.test_ciphertext,
-          key,
-        );
+        let decryptedTest: string;
+        try {
+          decryptedTest = await decrypt(
+            profile.test_iv,
+            profile.test_ciphertext,
+            key,
+          );
+        } catch {
+          // AES-GCM decryption fails with DOMException when key is wrong
+          throw new Error("Incorrect passphrase — please try again");
+        }
 
         if (decryptedTest !== "UNLOCK_OK") {
-          throw new Error("Incorrect passphrase");
+          throw new Error("Incorrect passphrase — please try again");
         }
       }
 
@@ -127,11 +133,16 @@ export function SecretProvider({ children }: { children: ReactNode }) {
         const oldKey = await deriveKey(oldPassphrase, profile.encryption_salt);
 
         if (profile.test_iv && profile.test_ciphertext) {
-          const decryptedTest = await decrypt(
-            profile.test_iv,
-            profile.test_ciphertext,
-            oldKey,
-          );
+          let decryptedTest: string;
+          try {
+            decryptedTest = await decrypt(
+              profile.test_iv,
+              profile.test_ciphertext,
+              oldKey,
+            );
+          } catch {
+            throw new Error("Current passphrase is incorrect");
+          }
 
           if (decryptedTest !== "UNLOCK_OK") {
             throw new Error("Current passphrase is incorrect");
