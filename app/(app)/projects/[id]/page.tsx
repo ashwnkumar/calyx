@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { ErrorState } from "@/components/projects/error-state";
 import { ProjectDetailsClient } from "@/components/env-variables/project-details-client";
+import { PageTransition } from "@/components/page-transition";
 
 /**
  * Validates if a string is a valid UUID v4 format
@@ -109,9 +110,11 @@ export default async function ProjectDetailsPage({
   }
 
   return (
-    <ProjectDetailsClient
-      project={projectResult.data as Project}
-      initialEnvFiles={(envResult.data as EnvFile[]) ?? []}
-    />
+    <PageTransition>
+      <ProjectDetailsClient
+        project={projectResult.data as Project}
+        initialEnvFiles={(envResult.data as EnvFile[]) ?? []}
+      />
+    </PageTransition>
   );
 }

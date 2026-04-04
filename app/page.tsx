@@ -8,9 +8,10 @@ import {
   Download,
   Clock,
   History,
+  ArrowRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
@@ -26,25 +27,25 @@ export default async function HomePage() {
   } = await supabase.auth.getUser();
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <header className="border-b">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4">
+      <header className="border-b bg-background/80 backdrop-blur-sm sticky top-0 z-50">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3">
           <div className="flex items-center justify-between">
-            <Link href="/dashboard" className="text-xl sm:text-2xl font-bold">
+            <Link href="/" className="text-xl font-bold tracking-tight">
               Calyx
             </Link>
             {user ? (
-              <Button asChild>
+              <Button asChild size="sm">
                 <Link href="/dashboard">Go to Dashboard</Link>
               </Button>
             ) : (
               <div className="flex items-center gap-2">
-                <Button asChild variant={"outline"}>
-                  <Link href="/register">Register</Link>
-                </Button>
-                <Button asChild>
+                <Button asChild variant="ghost" size="sm">
                   <Link href="/login">Login</Link>
+                </Button>
+                <Button asChild size="sm">
+                  <Link href="/register">Register</Link>
                 </Button>
               </div>
             )}
@@ -52,361 +53,373 @@ export default async function HomePage() {
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-12">
-        {/* Hero Section */}
-        <section className="text-center space-y-4">
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold">Calyx</h1>
-          <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto">
-            A personal, zero-knowledge secrets manager for environment variables
-          </p>
+      <main className="flex-1">
+        {/* Hero */}
+        <section className="relative overflow-hidden">
+          <div className="absolute inset-0 bg-linear-to-br from-primary/5 via-background to-secondary/5" />
+          <div className="relative max-w-4xl mx-auto px-4 sm:px-6 pt-16 sm:pt-24 pb-12 sm:pb-16 text-center">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight mb-4">
+              Calyx
+            </h1>
+            <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
+              A personal, zero-knowledge secrets manager for environment
+              variables
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Button asChild size="lg" className="gap-2">
+                <Link href={user ? "/dashboard" : "/register"}>
+                  {user ? "Go to Dashboard" : "Get Started"}
+                  <ArrowRight className="size-4" />
+                </Link>
+              </Button>
+              <Button asChild variant="outline" size="lg">
+                <Link
+                  href="https://github.com/ashwnkumar/calyx"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  View on GitHub
+                </Link>
+              </Button>
+            </div>
+          </div>
         </section>
 
         {/* The Problem */}
-        <section className="space-y-4">
-          <h2 className="text-2xl sm:text-3xl font-bold">
+        <section className="max-w-3xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-6">
             The Problem I Was Solving
           </h2>
-          <div className="prose prose-neutral dark:prose-invert max-w-none">
-            <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
+          <div className="space-y-4 text-base sm:text-lg text-muted-foreground leading-relaxed">
+            <p>
               You know that moment when you clone your project on a new device,
               run{" "}
-              <code className="px-2 py-1 bg-muted rounded text-sm">
+              <code className="px-1.5 py-0.5 bg-muted rounded text-sm font-mono">
                 npm install
               </code>
               , fire up the dev server, and... nothing works? Then you realize
               you need to hunt down all those{" "}
-              <code className="px-2 py-1 bg-muted rounded text-sm">.env</code>{" "}
+              <code className="px-1.5 py-0.5 bg-muted rounded text-sm font-mono">
+                .env
+              </code>{" "}
               files from Slack messages, old laptops, or that one Google Doc you
               created 6 months ago.
             </p>
-            <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
-              Yeah, I got tired of that too.
-            </p>
-            <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
-              So I built Calyx - a simple, secure way to store and access my
+            <p>Yeah, I got tired of that too.</p>
+            <p>
+              So I built Calyx — a simple, secure way to store and access my
               environment variables across all my devices without ever exposing
               them to the server. No more searching through chat history or USB
-              drives. Just unlock, copy, and you're back to coding.
+              drives. Just unlock, copy, and you&apos;re back to coding.
             </p>
           </div>
         </section>
 
         {/* What Makes It Different */}
-        <section className="space-y-6">
-          <h2 className="text-2xl sm:text-3xl font-bold">
-            What Makes It Different?
-          </h2>
-          <div className="grid gap-4 sm:gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Shield className="size-5 text-primary" />
-                  Zero-Knowledge Architecture
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  Your secrets are encrypted in your browser before they ever
-                  touch the server. I literally can't read them even if I wanted
-                  to. The encryption key is derived from your passphrase and
-                  lives only in memory - it's gone the moment you close the tab.
-                </p>
-              </CardContent>
-            </Card>
+        <section className="bg-muted/40 border-y">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
+            <h2 className="text-2xl sm:text-3xl font-bold mb-8">
+              What Makes It Different?
+            </h2>
+            <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
+              <Card className="bg-card hover:shadow-md">
+                <CardContent className="pt-6 space-y-3">
+                  <div className="inline-flex items-center justify-center size-10 rounded-lg bg-primary/10">
+                    <Shield className="size-5 text-primary" />
+                  </div>
+                  <h3 className="font-semibold text-lg">
+                    Zero-Knowledge Architecture
+                  </h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    Your secrets are encrypted in your browser before they ever
+                    touch the server. I literally can&apos;t read them even if I
+                    wanted to. The encryption key is derived from your
+                    passphrase and lives only in memory — it&apos;s gone the
+                    moment you close the tab.
+                  </p>
+                </CardContent>
+              </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Zap className="size-5 text-primary" />
-                  Built for Developers
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  Copy individual variables, download entire{" "}
-                  <code className="px-2 py-1 bg-muted rounded text-sm">
-                    .env
-                  </code>{" "}
-                  files, or grab everything as encrypted backups. It works the
-                  way you work.
-                </p>
-              </CardContent>
-            </Card>
+              <Card className="bg-card hover:shadow-md">
+                <CardContent className="pt-6 space-y-3">
+                  <div className="inline-flex items-center justify-center size-10 rounded-lg bg-primary/10">
+                    <Zap className="size-5 text-primary" />
+                  </div>
+                  <h3 className="font-semibold text-lg">
+                    Built for Developers
+                  </h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    Copy individual variables, download entire{" "}
+                    <code className="px-1 py-0.5 bg-muted rounded text-xs font-mono">
+                      .env
+                    </code>{" "}
+                    files, or grab everything as encrypted backups. It works the
+                    way you work.
+                  </p>
+                </CardContent>
+              </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Lock className="size-5 text-primary" />
-                  Actually Secure
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  AES-GCM-256 encryption, PBKDF2 key derivation with 350,000
-                  iterations, unique IVs for every encryption, and auto-lock
-                  after 30 minutes of inactivity. Your secrets stay secret.
-                </p>
-              </CardContent>
-            </Card>
+              <Card className="bg-card hover:shadow-md">
+                <CardContent className="pt-6 space-y-3">
+                  <div className="inline-flex items-center justify-center size-10 rounded-lg bg-primary/10">
+                    <Lock className="size-5 text-primary" />
+                  </div>
+                  <h3 className="font-semibold text-lg">Actually Secure</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    AES-GCM-256 encryption, PBKDF2 key derivation with 350,000
+                    iterations, unique IVs for every encryption, and auto-lock
+                    after 30 minutes of inactivity. Your secrets stay secret.
+                  </p>
+                </CardContent>
+              </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <History className="size-5 text-primary" />
-                  Version Control Built-In
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  Every change is automatically tracked. View complete version
-                  history, see line-by-line diffs between versions, and restore
-                  previous versions with one click. Your audit trail is always
-                  encrypted.
-                </p>
-              </CardContent>
-            </Card>
+              <Card className="bg-card hover:shadow-md">
+                <CardContent className="pt-6 space-y-3">
+                  <div className="inline-flex items-center justify-center size-10 rounded-lg bg-primary/10">
+                    <History className="size-5 text-primary" />
+                  </div>
+                  <h3 className="font-semibold text-lg">
+                    Version Control Built-In
+                  </h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    Every change is automatically tracked. View complete version
+                    history, see line-by-line diffs between versions, and
+                    restore previous versions with one click. Your audit trail
+                    is always encrypted.
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </section>
 
         {/* Features */}
-        <section className="space-y-6">
-          <h2 className="text-2xl sm:text-3xl font-bold">Features</h2>
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div className="flex gap-3">
-              <Lock className="size-5 text-primary shrink-0 mt-0.5" />
-              <div>
-                <h3 className="font-semibold mb-1">Client-side encryption</h3>
-                <p className="text-sm text-muted-foreground">
-                  Your passphrase never leaves your browser
-                </p>
+        <section className="max-w-5xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-8">Features</h2>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[
+              {
+                icon: Lock,
+                title: "Client-side encryption",
+                desc: "Your passphrase never leaves your browser",
+              },
+              {
+                icon: FileKey,
+                title: "Multiple projects",
+                desc: "Organize env files by project",
+              },
+              {
+                icon: FileKey,
+                title: "Multiple environments",
+                desc: "Store dev, staging, prod files separately",
+              },
+              {
+                icon: Download,
+                title: "Download options",
+                desc: "Get your .env files in original format",
+              },
+              {
+                icon: Clock,
+                title: "Smart locking",
+                desc: "Auto-lock on inactivity or tab switch",
+              },
+              {
+                icon: History,
+                title: "Version control",
+                desc: "Track changes and restore previous versions",
+              },
+             
+            ].map((feature) => (
+              <div key={feature.title} className="flex gap-3">
+                <div className="shrink-0 mt-0.5">
+                  <feature.icon className="size-5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-semibold mb-1">{feature.title}</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {feature.desc}
+                  </p>
+                </div>
               </div>
-            </div>
-            <div className="flex gap-3">
-              <FileKey className="size-5 text-primary shrink-0 mt-0.5" />
-              <div>
-                <h3 className="font-semibold mb-1">Multiple projects</h3>
-                <p className="text-sm text-muted-foreground">
-                  Organize env files by project
-                </p>
-              </div>
-            </div>
-            <div className="flex gap-3">
-              <FileKey className="size-5 text-primary shrink-0 mt-0.5" />
-              <div>
-                <h3 className="font-semibold mb-1">Multiple environments</h3>
-                <p className="text-sm text-muted-foreground">
-                  Store dev, staging, prod files separately
-                </p>
-              </div>
-            </div>
-            <div className="flex gap-3">
-              <Download className="size-5 text-primary shrink-0 mt-0.5" />
-              <div>
-                <h3 className="font-semibold mb-1">Download options</h3>
-                <p className="text-sm text-muted-foreground">
-                  Get your .env files in original format
-                </p>
-              </div>
-            </div>
-            <div className="flex gap-3">
-              <Clock className="size-5 text-primary shrink-0 mt-0.5" />
-              <div>
-                <h3 className="font-semibold mb-1">Smart locking</h3>
-                <p className="text-sm text-muted-foreground">
-                  Auto-lock on inactivity or tab switch
-                </p>
-              </div>
-            </div>
-            <div className="flex gap-3">
-              <Zap className="size-5 text-primary shrink-0 mt-0.5" />
-              <div>
-                <h3 className="font-semibold mb-1">Fully responsive</h3>
-                <p className="text-sm text-muted-foreground">
-                  Works on mobile, tablet, and desktop
-                </p>
-              </div>
-            </div>
-            <div className="flex gap-3">
-              <History className="size-5 text-primary shrink-0 mt-0.5" />
-              <div>
-                <h3 className="font-semibold mb-1">Version control</h3>
-                <p className="text-sm text-muted-foreground">
-                  Track changes and restore previous versions
-                </p>
-              </div>
-            </div>
+            ))}
           </div>
         </section>
 
         {/* How It Works */}
-        <section className="space-y-6">
-          <h2 className="text-2xl sm:text-3xl font-bold">How It Works</h2>
-          <ol className="space-y-3 list-decimal list-inside text-muted-foreground">
-            <li className="text-base sm:text-lg">
-              Sign in with Supabase authentication
-            </li>
-            <li className="text-base sm:text-lg">
-              Create a project (e.g., "My Awesome App")
-            </li>
-            <li className="text-base sm:text-lg">
-              Add environment files (paste your .env content)
-            </li>
-            <li className="text-base sm:text-lg">
-              Set up your passphrase (first time only)
-            </li>
-            <li className="text-base sm:text-lg">
-              Unlock when needed - Your secrets decrypt in the browser
-            </li>
-            <li className="text-base sm:text-lg">
-              Copy or download - Get your env vars back instantly
-            </li>
-            <li className="text-base sm:text-lg">
-              View version history - See all changes with line-by-line diffs
-            </li>
-            <li className="text-base sm:text-lg">
-              Lock when done - Encryption key is cleared from memory
-            </li>
-          </ol>
+        <section className="bg-muted/40 border-y">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
+            <h2 className="text-2xl sm:text-3xl font-bold text-center mb-10">
+              How It Works
+            </h2>
+            <div className="grid sm:grid-cols-4 gap-8">
+              {[
+                {
+                  step: "1",
+                  title: "Sign in",
+                  desc: "Supabase authentication",
+                },
+                {
+                  step: "2",
+                  title: "Add projects",
+                  desc: "Create projects & paste your .env files",
+                },
+                {
+                  step: "3",
+                  title: "Set passphrase",
+                  desc: "One master passphrase, first time only",
+                },
+                {
+                  step: "4",
+                  title: "Unlock & use",
+                  desc: "Decrypt in-browser, copy or download, then lock",
+                },
+              ].map((item) => (
+                <div key={item.step} className="text-center">
+                  <div className="inline-flex items-center justify-center size-10 rounded-full bg-primary text-primary-foreground font-bold text-sm mb-3">
+                    {item.step}
+                  </div>
+                  <h3 className="font-semibold mb-1">{item.title}</h3>
+                  <p className="text-sm text-muted-foreground">{item.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
         </section>
 
         {/* Security Details */}
-        <section className="space-y-6">
-          <h2 className="text-2xl sm:text-3xl font-bold">Security Details</h2>
+        <section className="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-6">
+            Security Details
+          </h2>
           <Card>
             <CardContent className="pt-6">
-              <ul className="space-y-2 text-sm sm:text-base text-muted-foreground">
-                <li>
-                  <span className="font-semibold text-foreground">
-                    Encryption:
-                  </span>{" "}
-                  AES-GCM-256 (industry standard)
-                </li>
-                <li>
-                  <span className="font-semibold text-foreground">
-                    Key Derivation:
-                  </span>{" "}
-                  PBKDF2-SHA256 with 350,000 iterations
-                </li>
-                <li>
-                  <span className="font-semibold text-foreground">Salt:</span>{" "}
-                  16 random bytes per user (stored in database)
-                </li>
-                <li>
-                  <span className="font-semibold text-foreground">IV:</span> 12
-                  random bytes per encryption (never reused)
-                </li>
-                <li>
-                  <span className="font-semibold text-foreground">
-                    Key Storage:
-                  </span>{" "}
-                  In-memory only (React Context)
-                </li>
-                <li>
-                  <span className="font-semibold text-foreground">
-                    Passphrase Verification:
-                  </span>{" "}
-                  Test ciphertext stored in database
-                </li>
-                <li>
-                  <span className="font-semibold text-foreground">
-                    Auto-lock:
-                  </span>{" "}
-                  30 minutes of inactivity or tab visibility change
-                </li>
-                <li>
-                  <span className="font-semibold text-foreground">
-                    RLS Policies:
-                  </span>{" "}
-                  Row-level security ensures you only see your own data
-                </li>
-              </ul>
+              <div className="grid sm:grid-cols-2 gap-x-8 gap-y-3 text-sm sm:text-base">
+                {[
+                  ["Encryption", "AES-GCM-256 (industry standard)"],
+                  ["Key Derivation", "PBKDF2-SHA256 with 350,000 iterations"],
+                  ["Salt", "16 random bytes per user (stored in database)"],
+                  ["IV", "12 random bytes per encryption (never reused)"],
+                  ["Key Storage", "In-memory only (React Context)"],
+                  [
+                    "Passphrase Verification",
+                    "Test ciphertext stored in database",
+                  ],
+                  [
+                    "Auto-lock",
+                    "30 minutes of inactivity or tab visibility change",
+                  ],
+                  [
+                    "RLS Policies",
+                    "Row-level security ensures you only see your own data",
+                  ],
+                ].map(([label, value]) => (
+                  <div key={label} className="py-1">
+                    <span className="font-semibold text-foreground">
+                      {label}:
+                    </span>{" "}
+                    <span className="text-muted-foreground">{value}</span>
+                  </div>
+                ))}
+              </div>
             </CardContent>
           </Card>
         </section>
 
         {/* Tech Stack */}
-        <section className="space-y-6">
-          <h2 className="text-2xl sm:text-3xl font-bold">Tech Stack</h2>
-          <div className="grid sm:grid-cols-2 gap-3 text-sm sm:text-base">
-            <div className="flex justify-between p-3 bg-muted rounded-lg">
-              <span className="text-muted-foreground">Framework</span>
-              <span className="font-semibold">Next.js 15</span>
-            </div>
-            <div className="flex justify-between p-3 bg-muted rounded-lg">
-              <span className="text-muted-foreground">Language</span>
-              <span className="font-semibold">TypeScript</span>
-            </div>
-            <div className="flex justify-between p-3 bg-muted rounded-lg">
-              <span className="text-muted-foreground">Styling</span>
-              <span className="font-semibold">Tailwind CSS v4</span>
-            </div>
-            <div className="flex justify-between p-3 bg-muted rounded-lg">
-              <span className="text-muted-foreground">UI Components</span>
-              <span className="font-semibold">shadcn/ui</span>
-            </div>
-            <div className="flex justify-between p-3 bg-muted rounded-lg">
-              <span className="text-muted-foreground">Authentication</span>
-              <span className="font-semibold">Supabase Auth</span>
-            </div>
-            <div className="flex justify-between p-3 bg-muted rounded-lg">
-              <span className="text-muted-foreground">Database</span>
-              <span className="font-semibold">Supabase (PostgreSQL)</span>
-            </div>
-            <div className="flex justify-between p-3 bg-muted rounded-lg">
-              <span className="text-muted-foreground">Encryption</span>
-              <span className="font-semibold">Web Crypto API</span>
-            </div>
-            <div className="flex justify-between p-3 bg-muted rounded-lg">
-              <span className="text-muted-foreground">State Management</span>
-              <span className="font-semibold">React Context</span>
+        <section className="bg-muted/40 border-y">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
+            <h2 className="text-2xl sm:text-3xl font-bold mb-6">Tech Stack</h2>
+            <div className="grid sm:grid-cols-2 gap-3 text-sm sm:text-base">
+              {[
+                ["Framework", "Next.js 15"],
+                ["Language", "TypeScript"],
+                ["Styling", "Tailwind CSS v4"],
+                ["UI Components", "shadcn/ui"],
+                ["Authentication", "Supabase Auth"],
+                ["Database", "Supabase (PostgreSQL)"],
+                ["Encryption", "Web Crypto API"],
+                ["State Management", "React Context"],
+              ].map(([label, value]) => (
+                <div
+                  key={label}
+                  className="flex justify-between p-3 bg-background rounded-lg border"
+                >
+                  <span className="text-muted-foreground">{label}</span>
+                  <span className="font-semibold">{value}</span>
+                </div>
+              ))}
             </div>
           </div>
         </section>
 
         {/* Why Calyx */}
-        <section className="space-y-4">
-          <h2 className="text-2xl sm:text-3xl font-bold">Why "Calyx"?</h2>
+        <section className="max-w-3xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-4">
+            Why &ldquo;Calyx&rdquo;?
+          </h2>
           <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
-            A calyx is the protective outer layer of a flower bud - it shields
-            what's inside until it's ready to bloom. Seemed fitting for a
-            secrets manager. 🌸
+            A calyx is the protective outer layer of a flower bud — it shields
+            what&apos;s inside until it&apos;s ready to bloom. Seemed fitting
+            for a secrets manager. 🌸
           </p>
         </section>
 
         {/* CTA */}
-        <section className="text-center py-8 space-y-4">
-          <h2 className="text-2xl sm:text-3xl font-bold">
-            Ready to Get Started?
-          </h2>
-          <p className="text-muted-foreground">
-            Stop hunting for your .env files and start managing them securely.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
-            <Button asChild size="lg">
-              <Link href={user ? "/dashboard" : "/register"}>
-                {user ? "Go to Dashboard" : "Get Started"}
-              </Link>
-            </Button>
-            <Button asChild variant="outline" size="lg">
-              <Link
-                href="https://github.com/ashwnkumar/calyx"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                View on GitHub
-              </Link>
-            </Button>
+        <section className="border-t bg-muted/40">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 py-16 sm:py-20 text-center">
+            <h2 className="text-2xl sm:text-3xl font-bold mb-3">
+              Ready to Get Started?
+            </h2>
+            <p className="text-muted-foreground mb-6">
+              Stop hunting for your .env files and start managing them securely.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Button asChild size="lg" className="gap-2">
+                <Link href={user ? "/dashboard" : "/register"}>
+                  {user ? "Go to Dashboard" : "Get Started"}
+                  <ArrowRight className="size-4" />
+                </Link>
+              </Button>
+              <Button asChild variant="outline" size="lg">
+                <Link
+                  href="https://github.com/ashwnkumar/calyx"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  View on GitHub
+                </Link>
+              </Button>
+            </div>
           </div>
         </section>
       </main>
 
       {/* Footer */}
-      <footer className="border-t mt-12">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 text-center text-sm text-muted-foreground">
-          <p>
-            Made with ☕ by Ashwin because I was tired of losing my .env files.
-          </p>
+      <footer className="border-t">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-muted-foreground">
+          <span>
+            Made with ☕ by{" "}
+            <Link
+              href="https://ashwinkumar-dev.vercel.app"
+              className="text-primary hover:underline"
+            >
+              Ashwin
+            </Link>{" "}
+            because I was tired of losing my .env files.
+          </span>
+          <div className="flex items-center gap-4">
+            <Link
+              href="https://github.com/ashwnkumar/calyx"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-foreground"
+            >
+              GitHub
+            </Link>
+            <Link href="/dashboard" className="hover:text-foreground">
+              Dashboard
+            </Link>
+          </div>
         </div>
       </footer>
     </div>

@@ -2,17 +2,22 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { FileText, Trash2, Calendar } from "lucide-react";
+import { FileText, Trash2, Calendar, MoreVertical } from "lucide-react";
 import { toast } from "sonner";
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -42,13 +47,6 @@ type EnvFileCardProps = {
   onDeleted: (fileId: string) => void;
 };
 
-/**
- * EnvFileCard Component
- *
- * Card component displaying an environment file.
- * Clicking the card navigates to the env file details page.
- * Includes delete button with confirmation dialog.
- */
 export function EnvFileCard({
   envFile,
   projectId,
@@ -62,22 +60,12 @@ export function EnvFileCard({
     router.push(`/projects/${projectId}/env/${envFile.id}`);
   };
 
-  const handleDeleteClick = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent card click
-    setIsDeleteDialogOpen(true);
-  };
-
   const handleConfirmDelete = async () => {
     setIsDeleting(true);
     setIsDeleteDialogOpen(false);
-
     try {
       const result = await deleteEnvFiles(projectId, [envFile.id]);
-
-      if (!result.success) {
-        throw new Error(result.error);
-      }
-
+      if (!result.success) throw new Error(result.error);
       toast.success(`Deleted environment file: ${envFile.name}`);
       onDeleted(envFile.id);
     } catch (error: any) {
@@ -90,48 +78,58 @@ export function EnvFileCard({
 
   const formattedDate = new Date(envFile.created_at).toLocaleDateString(
     "en-US",
-    {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    },
+    { year: "numeric", month: "short", day: "numeric" },
   );
 
   return (
     <>
       <Card
-        className="cursor-pointer hover:shadow-lg transition-shadow"
+        className="cursor-pointer hover:shadow-md hover:-translate-y-0.5 hover:border-primary/30"
         onClick={handleCardClick}
       >
-        <CardHeader>
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-2">
-              <FileText className="h-5 w-5 text-muted-foreground" />
-              <CardTitle className="text-lg">{envFile.name}</CardTitle>
+        <CardHeader className="pb-2">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <FileText className="size-4 text-muted-foreground shrink-0" />
+              <CardTitle className="text-base truncate">
+                {envFile.name}
+              </CardTitle>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleDeleteClick}
-              disabled={isDeleting}
-              className="h-8 w-8 text-muted-foreground hover:text-destructive"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-7 shrink-0"
+                  onClick={(e) => e.stopPropagation()}
+                  aria-label={`Actions for ${envFile.name}`}
+                >
+                  <MoreVertical className="size-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <DropdownMenuItem
+                  onClick={() => setIsDeleteDialogOpen(true)}
+                  className="text-destructive focus:text-destructive cursor-pointer"
+                >
+                  <Trash2 className="size-4 mr-2" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </CardHeader>
         <CardContent>
-          <CardDescription className="flex items-center gap-2">
-            <Calendar className="h-4 w-4" />
+          <CardDescription className="flex items-center gap-1.5 text-xs">
+            <Calendar className="size-3.5" />
             Created {formattedDate}
           </CardDescription>
         </CardContent>
-        <CardFooter className="text-sm text-muted-foreground">
-          Click to view and manage
-        </CardFooter>
       </Card>
 
-      {/* Delete Confirmation Dialog */}
       <AlertDialog
         open={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
@@ -140,8 +138,8 @@ export function EnvFileCard({
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Environment File</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{envFile.name}"? This action
-              cannot be undone.
+              Are you sure you want to delete &ldquo;{envFile.name}&rdquo;? This
+              action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

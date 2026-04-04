@@ -1,41 +1,25 @@
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { ChangePassphraseDialog } from "@/components/change-passphrase-dialog";
+import type { Metadata } from "next";
+import { createClient } from "@/lib/supabase/server";
+import { SettingsClient } from "./settings-client";
+import { PageTransition } from "@/components/page-transition";
 
-export default function SettingsPage() {
+export const metadata: Metadata = {
+  title: "Settings",
+  description: "Manage your account and security settings.",
+};
+
+export default async function SettingsPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Settings</h1>
-        <p className="text-muted-foreground mt-2">
-          Manage your account and security settings
-        </p>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Security</CardTitle>
-          <CardDescription>
-            Manage your master passphrase and encryption settings
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium">Master Passphrase</p>
-              <p className="text-sm text-muted-foreground">
-                Change your master passphrase used to encrypt all secrets
-              </p>
-            </div>
-            <ChangePassphraseDialog />
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+    <PageTransition>
+      <SettingsClient
+        userEmail={user?.email ?? ""}
+        userCreatedAt={user?.created_at ?? ""}
+      />
+    </PageTransition>
   );
 }

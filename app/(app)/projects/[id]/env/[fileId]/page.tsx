@@ -2,6 +2,7 @@ import { unstable_noStore as noStore } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { ErrorState } from "@/components/projects/error-state";
 import { EnvFileDetailsClient } from "@/components/env-variables/env-file-details-client";
+import { PageTransition } from "@/components/page-transition";
 
 /**
  * Validates if a string is a valid UUID v4 format
@@ -76,9 +77,11 @@ export default async function EnvFileDetailsPage({
   }
 
   return (
-    <EnvFileDetailsClient
-      project={project as Project}
-      envFile={envFile as EnvFile}
-    />
+    <PageTransition>
+      <EnvFileDetailsClient
+        project={project as Project}
+        envFile={envFile as EnvFile}
+      />
+    </PageTransition>
   );
 }
