@@ -1887,3 +1887,12 @@ _This file is automatically maintained as development progresses. Each significa
 - Migrated `add-env-dialog.tsx`, `env-file-card.tsx`, `env-file-details-client.tsx` from server actions to API fetch calls
 - `app/(app)/projects/[id]/env/[fileId]/actions.ts` now has zero importers
 - `app/(app)/projects/[id]/actions.ts` only has version history imports remaining (Phase 4 scope)
+
+## 2026-04-04 - API Migration Phase 4: Version History Endpoints
+
+- Created `GET /api/v1/env/:envVarId/versions` — list version history with UUID validation, read rate limit
+- Created `GET /api/v1/env/:envVarId/versions/:versionId` — get specific version with dual UUID validation, scoped to env_var_id
+- Created `POST /api/v1/env/:envVarId/versions/:versionId/restore` — restore with version-belongs-to-env-var check, revalidates project path
+- Migrated `version-history-dialog.tsx` from server actions to API fetch calls (loadHistory, viewVersion, handleRestore)
+- Migrated `env-file-history-client.tsx` from server actions to API fetch calls (loadHistory, handleRestore)
+- All three server action files now have zero importers — fully dead code ready for cleanup in Phase 6

@@ -203,18 +203,18 @@ Bulk (for passphrase change):
 
 > Migrate version history reads + restore.
 
-- [ ] **4.1** `GET /api/v1/env/:envVarId/versions` → `app/api/v1/env/[envVarId]/versions/route.ts`
+- [x] **4.1** `GET /api/v1/env/:envVarId/versions` → `app/api/v1/env/[envVarId]/versions/route.ts`
   - UUID validation on envVarId
   - Returns version list ordered by version_number desc
   - Replaces: `getEnvVarHistory()` server action
-- [ ] **4.2** `GET /api/v1/env/:envVarId/versions/:versionId` → `app/api/v1/env/[envVarId]/versions/[versionId]/route.ts`
+- [x] **4.2** `GET /api/v1/env/:envVarId/versions/:versionId` → `app/api/v1/env/[envVarId]/versions/[versionId]/route.ts`
   - UUID validation on both params
   - Replaces: `getEnvVarVersion()` server action
-- [ ] **4.3** `POST /api/v1/env/:envVarId/versions/:versionId/restore` → `app/api/v1/env/[envVarId]/versions/[versionId]/restore/route.ts`
+- [x] **4.3** `POST /api/v1/env/:envVarId/versions/:versionId/restore` → `app/api/v1/env/[envVarId]/versions/[versionId]/restore/route.ts`
   - Validates version belongs to env_var
   - Replaces: `restoreEnvVarVersion()` server action
-- [ ] **4.4** Update history page + any client components to use API
-- [ ] **4.5** Verify all version-related server action callers are migrated
+- [x] **4.4** Update history page + any client components to use API
+- [x] **4.5** Verify all version-related server action callers are migrated
 
 ---
 

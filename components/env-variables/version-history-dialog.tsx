@@ -14,11 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useSecrets } from "@/lib/contexts/SecretContext";
 import { decrypt } from "@/lib/crypto";
-import {
-  getEnvVarHistory,
-  getEnvVarVersion,
-  restoreEnvVarVersion,
-} from "@/app/(app)/projects/[id]/actions";
+import type { ApiResponse } from "@/lib/types/api";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -72,7 +68,8 @@ export function VersionHistoryDialog({
   async function loadHistory() {
     setLoading(true);
     try {
-      const result = await getEnvVarHistory(envVarId);
+      const res = await fetch(`/api/v1/env/${envVarId}/versions`);
+      const result: ApiResponse<EnvVarVersion[]> = await res.json();
 
       if (result.success) {
         setVersions(result.data);
@@ -96,7 +93,8 @@ export function VersionHistoryDialog({
     setDecryptedValue("");
 
     try {
-      const result = await getEnvVarVersion(versionId);
+      const res = await fetch(`/api/v1/env/${envVarId}/versions/${versionId}`);
+      const result: ApiResponse<EnvVarVersion> = await res.json();
 
       if (!result.success) {
         toast.error(result.error);
@@ -131,7 +129,11 @@ export function VersionHistoryDialog({
     }
 
     try {
-      const result = await restoreEnvVarVersion(envVarId, versionId);
+      const res = await fetch(
+        `/api/v1/env/${envVarId}/versions/${versionId}/restore`,
+        { method: "POST" },
+      );
+      const result: ApiResponse<{ restored: boolean }> = await res.json();
 
       if (result.success) {
         toast.success("Version restored successfully");
