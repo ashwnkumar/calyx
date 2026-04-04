@@ -1842,3 +1842,21 @@ _This file is automatically maintained as development progresses. Each significa
 - `components/change-passphrase-dialog.tsx` - New dialog component
 - `app/(app)/settings/page.tsx` - New settings page
 - `components/app-header.tsx` - Added Settings navigation link
+
+## 2026-04-04 - API Migration Phase 0: Foundation & Shared Infrastructure
+
+- Fixed broken middleware: renamed `proxy.ts` → `middleware.ts`, exported as `middleware` (was `proxy` — Next.js never picked it up)
+- Created `lib/types/api.ts` — shared `ApiResponse<T>`, `ApiError`, and domain types (`Project`, `EnvFile`, `EnvVarVersion`, `Profile`)
+- Created `lib/api/auth.ts` — `authenticateRequest()` centralizes Supabase session auth for all route handlers
+- Created `lib/api/response.ts` — `success()` / `error()` helpers with security headers baked in
+- Created `lib/api/validation.ts` — `validateUUID`, `validateBase64`, `validateRequiredString`, `validateOptionalString`
+- Created `lib/api/rate-limit.ts` — in-memory sliding-window rate limiter with preset tiers (read/write/sensitive/bulk)
+- Created `lib/api/with-auth.ts` — HOF wrapper providing auth + rate limiting + body size check + error handling for all API routes
+
+## 2026-04-04 - API Migration Phase 1: Profile Endpoints
+
+- Created `GET /api/v1/profile` — returns encryption_salt, test_iv, test_ciphertext, has_passphrase; rate-limited at 10 req/min (sensitive tier)
+- Created `PUT /api/v1/profile/passphrase` — updates test_iv + test_ciphertext with base64 validation on iv (12 bytes); same rate limit
+- Rewrote `SecretContext.tsx` to use API routes: `unlock()` and `checkPassphraseSetup()` now call `/api/v1/profile`, first-time setup calls `PUT /api/v1/profile/passphrase`
+- Removed top-level `import { createClient }` from SecretContext — only a temporary dynamic import remains inside `changePassphrase()` for env_vars (will be replaced in Phase 3 with bulk-update endpoint)
+- All existing consumers of `useSecrets` / `SecretProvider` unaffected — exported interface unchanged

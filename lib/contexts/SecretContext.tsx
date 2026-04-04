@@ -9,8 +9,15 @@ import {
   useEffect,
 } from "react";
 import { deriveKey, encrypt, decrypt } from "@/lib/crypto";
-import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
+import type { ApiResponse } from "@/lib/types/api";
+
+type ProfileData = {
+  encryption_salt: string;
+  test_iv: string | null;
+  test_ciphertext: string | null;
+  has_passphrase: boolean;
+};
 
 type SecretState = {
   cryptoKey: CryptoKey | null;
@@ -32,6 +39,36 @@ type SecretContextValue = SecretState & SecretActions;
 
 const SecretContext = createContext<SecretContextValue | undefined>(undefined);
 
+/**
+ * Fetch profile from API. Throws on failure.
+ */
+async function fetchProfile(): Promise<ProfileData> {
+  const res = await fetch("/api/v1/profile");
+  const json: ApiResponse<ProfileData> = await res.json();
+
+  if (!json.success) {
+    throw new Error(json.error || "Failed to load profile");
+  }
+
+  return json.data;
+}
+
+/**
+ * Update passphrase verification blob via API. Throws on failure.
+ */
+async function updatePassphrase(testIv: string, testCiphertext: string) {
+  const res = await fetch("/api/v1/profile/passphrase", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ test_iv: testIv, test_ciphertext: testCiphertext }),
+  });
+  const json: ApiResponse<{ updated: boolean }> = await res.json();
+
+  if (!json.success) {
+    throw new Error(json.error || "Failed to update passphrase data");
+  }
+}
+
 export function SecretProvider({ children }: { children: ReactNode }) {
   const [cryptoKey, setCryptoKey] = useState<CryptoKey | null>(null);
   const [isUnlocked, setIsUnlocked] = useState(false);
@@ -40,16 +77,11 @@ export function SecretProvider({ children }: { children: ReactNode }) {
 
   const unlock = useCallback(async (passphrase: string) => {
     try {
-      const supabase = createClient();
+      const profile = await fetchProfile();
 
-      const { data: profile, error } = await supabase
-        .from("profiles")
-        .select("encryption_salt, test_iv, test_ciphertext")
-        .single();
-
-      if (error) throw error;
-      if (!profile?.encryption_salt)
+      if (!profile.encryption_salt) {
         throw new Error("No encryption salt found");
+      }
 
       // Derive AES key from passphrase + salt
       const key = await deriveKey(passphrase, profile.encryption_salt);
@@ -80,19 +112,9 @@ export function SecretProvider({ children }: { children: ReactNode }) {
       // If this is first unlock (no test yet) → create verification blob
       if (!profile.test_ciphertext) {
         const { iv, ciphertext } = await encrypt("UNLOCK_OK", key);
-        const { error: updateError } = await supabase
-          .from("profiles")
-          .update({
-            test_iv: iv,
-            test_ciphertext: ciphertext,
-          })
-          .eq("id", (await supabase.auth.getUser()).data.user?.id);
+        await updatePassphrase(iv, ciphertext);
 
-        if (updateError) throw updateError;
-
-        // Update isPassphraseSetup since we just created test_ciphertext
         setIsPassphraseSetup(true);
-
         toast.success("Passphrase protection set up successfully");
       } else {
         toast.success("Secrets unlocked");
@@ -117,17 +139,12 @@ export function SecretProvider({ children }: { children: ReactNode }) {
   const changePassphrase = useCallback(
     async (oldPassphrase: string, newPassphrase: string) => {
       try {
-        const supabase = createClient();
-
         // 1. Fetch profile with salt
-        const { data: profile, error: profileError } = await supabase
-          .from("profiles")
-          .select("encryption_salt, test_iv, test_ciphertext")
-          .single();
+        const profile = await fetchProfile();
 
-        if (profileError) throw profileError;
-        if (!profile?.encryption_salt)
+        if (!profile.encryption_salt) {
           throw new Error("No encryption salt found");
+        }
 
         // 2. Verify old passphrase
         const oldKey = await deriveKey(oldPassphrase, profile.encryption_salt);
@@ -152,7 +169,16 @@ export function SecretProvider({ children }: { children: ReactNode }) {
         // 3. Derive new key
         const newKey = await deriveKey(newPassphrase, profile.encryption_salt);
 
-        // 4. Fetch all env_vars for this user
+        // 4. Fetch all env_vars for this user via API
+        const envRes = await fetch("/api/v1/env/bulk-update", {
+          method: "GET",
+        });
+
+        // Note: bulk-update GET doesn't exist yet (Phase 3).
+        // For now, fall back to direct Supabase client for env_vars fetch.
+        // This will be fully migrated in Phase 3 (task 3.5 / 3.6).
+        const { createClient } = await import("@/lib/supabase/client");
+        const supabase = createClient();
         const { data: envVars, error: envError } = await supabase
           .from("env_vars")
           .select("id, iv, ciphertext");
@@ -175,6 +201,7 @@ export function SecretProvider({ children }: { children: ReactNode }) {
         );
 
         // 7. Batch update all env_vars
+        // TODO: Replace with PUT /api/v1/env/bulk-update in Phase 3
         if (updates.length > 0) {
           for (const update of updates) {
             const { error: updateError } = await supabase
@@ -186,16 +213,8 @@ export function SecretProvider({ children }: { children: ReactNode }) {
           }
         }
 
-        // 8. Update profile with new test values
-        const { error: profileUpdateError } = await supabase
-          .from("profiles")
-          .update({
-            test_iv: newTestIv,
-            test_ciphertext: newTestCiphertext,
-          })
-          .eq("id", (await supabase.auth.getUser()).data.user?.id);
-
-        if (profileUpdateError) throw profileUpdateError;
+        // 8. Update profile with new test values via API
+        await updatePassphrase(newTestIv, newTestCiphertext);
 
         // 9. Update in-memory key
         setCryptoKey(newKey);
@@ -218,21 +237,8 @@ export function SecretProvider({ children }: { children: ReactNode }) {
     const checkPassphraseSetup = async () => {
       try {
         setIsLoading(true);
-        const supabase = createClient();
-
-        const { data: profile, error } = await supabase
-          .from("profiles")
-          .select("encryption_salt, test_iv, test_ciphertext")
-          .single();
-
-        if (error) {
-          console.error("Failed to query profile:", error);
-          toast.error("Failed to load profile data");
-          return;
-        }
-
-        // Set isPassphraseSetup based on test_ciphertext existence
-        setIsPassphraseSetup(!!profile?.test_ciphertext);
+        const profile = await fetchProfile();
+        setIsPassphraseSetup(profile.has_passphrase);
       } catch (err) {
         console.error("Error checking passphrase setup:", err);
         toast.error("Failed to check passphrase setup status");
