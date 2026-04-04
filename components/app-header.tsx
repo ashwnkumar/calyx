@@ -13,6 +13,7 @@ import {
   Menu,
   User,
   ChevronDown,
+  Shield,
   type LucideIcon,
   LayoutDashboard,
 } from "lucide-react";
@@ -54,6 +55,9 @@ const SHEET_LINKS: { href: string; label: string; icon?: LucideIcon }[] = [
   { href: "/", label: "Home", icon: Home },
 ];
 
+const ADMIN_NAV = { href: "/admin", label: "Admin", icon: Shield };
+const ADMIN_SHEET = { href: "/admin", label: "Admin", icon: Shield };
+
 /* ────────────────────────────────────────────────────────────── */
 
 function NavIcon({
@@ -87,7 +91,13 @@ function NavIcon({
 
 /* ────────────────────────────────────────────────────────────── */
 
-export function AppHeader({ userEmail }: { userEmail: string }) {
+export function AppHeader({
+  userEmail,
+  isAdmin = false,
+}: {
+  userEmail: string;
+  isAdmin?: boolean;
+}) {
   const router = useRouter();
   const pathname = usePathname();
 
@@ -163,6 +173,14 @@ export function AppHeader({ userEmail }: { userEmail: string }) {
                 isActive={pathname.startsWith(href)}
               />
             ))}
+            {isAdmin && (
+              <NavIcon
+                href={ADMIN_NAV.href}
+                label={ADMIN_NAV.label}
+                Icon={ADMIN_NAV.icon}
+                isActive={pathname.startsWith(ADMIN_NAV.href)}
+              />
+            )}
           </div>
 
           {/* Right */}
@@ -250,6 +268,20 @@ export function AppHeader({ userEmail }: { userEmail: string }) {
                       </Link>
                     </Button>
                   ))}
+
+                  {isAdmin && (
+                    <Button
+                      asChild
+                      variant="ghost"
+                      className="justify-start"
+                      onClick={() => setSheetOpen(false)}
+                    >
+                      <Link href={ADMIN_SHEET.href}>
+                        <ADMIN_SHEET.icon className="size-4 mr-2" />
+                        {ADMIN_SHEET.label}
+                      </Link>
+                    </Button>
+                  )}
 
                   <div className="border-t mt-2 pt-2">
                     <Button

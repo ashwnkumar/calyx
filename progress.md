@@ -1922,3 +1922,23 @@ _This file is automatically maintained as development progresses. Each significa
 - Server-side pages kept using direct Supabase server client (efficient, no unnecessary HTTP hop)
 - Zero diagnostics across all modified files after deletion
 - Remaining: 6.7 (smoke test) and 6.8 (revalidation verification) require manual testing
+
+## 2026-04-04 - Super Admin Dashboard
+
+- Added `is_admin` boolean column concept to profiles table (manual SQL migration required)
+- Created `lib/supabase/admin.ts` — service role client for server-only admin operations
+- Created `lib/admin.ts` — helper to check if current user is admin via `profiles.is_admin`
+- Created `app/(app)/admin/page.tsx` — admin dashboard with user listing and platform stats
+- Created `components/admin/admin-dashboard-client.tsx` — client component with stat cards (users, projects, env vars) and users table
+- Updated `app/(app)/layout.tsx` — queries `is_admin` and passes it to AppHeader
+- Updated `components/app-header.tsx` — conditionally shows Admin nav link (Shield icon) for admin users in both desktop and mobile nav
+- Updated `.env.example` — added `SUPABASE_SERVICE_ROLE_KEY` placeholder
+
+## 2026-04-04 - Enriched Admin Dashboard
+
+- Enhanced `app/(app)/admin/page.tsx` — parallel data fetching for users, projects, profiles, and env_vars; computes derived stats (active last 7d, passphrase setup rate, avg vars/project, users with no projects)
+- Enhanced `components/admin/admin-dashboard-client.tsx` — now shows:
+  - 4 primary stat cards (users, projects, env vars, encryption setup) with contextual subtitles
+  - 3 secondary insight cards (active 7d, no projects, avg vars/project)
+  - Recent projects table (last 5 across all users with owner, var count, relative time)
+  - Enriched users table with email confirmation status, per-user env var count, passphrase setup icon, tooltips
