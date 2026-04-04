@@ -138,29 +138,29 @@ Bulk (for passphrase change):
 
 > Migrate project CRUD from server actions to REST.
 
-- [ ] **2.1** `GET /api/v1/projects` → `app/api/v1/projects/route.ts`
+- [x] **2.1** `GET /api/v1/projects` → `app/api/v1/projects/route.ts`
   - Returns projects with `env_vars` count, ordered by `updated_at` desc
   - Replaces: direct query in `dashboard/page.tsx`
-- [ ] **2.2** `POST /api/v1/projects` → same route file, POST handler
+- [x] **2.2** `POST /api/v1/projects` → same route file, POST handler
   - Body: `{ name, description? }`
   - Uses `validateProjectData()` (existing validator)
   - Duplicate name check
   - Replaces: `createProject()` server action
-- [ ] **2.3** `GET /api/v1/projects/:id` → `app/api/v1/projects/[id]/route.ts`
+- [x] **2.3** `GET /api/v1/projects/:id` → `app/api/v1/projects/[id]/route.ts`
   - Returns project + env files list
   - UUID validation on `:id`
   - Replaces: direct queries in `projects/[id]/page.tsx`
-- [ ] **2.4** `PATCH /api/v1/projects/:id` → same route file, PATCH handler
+- [x] **2.4** `PATCH /api/v1/projects/:id` → same route file, PATCH handler
   - Body: `{ name?, description? }` (partial update)
   - Validates name length, description length, duplicate name check
   - Replaces: `updateProjectName()` + `updateProjectDescription()` server actions
-- [ ] **2.5** `DELETE /api/v1/projects/:id` → same route file, DELETE handler
+- [x] **2.5** `DELETE /api/v1/projects/:id` → same route file, DELETE handler
   - Ownership verification before delete
   - Replaces: `deleteProject()` server action
-- [ ] **2.6** Update `dashboard/page.tsx` to fetch from API (server-side fetch with cookie forwarding)
-- [ ] **2.7** Update `projects/[id]/page.tsx` to fetch from API
-- [ ] **2.8** Update client components that call project server actions to use `fetch()`
-- [ ] **2.9** Delete `app/(app)/actions.ts` once all callers are migrated
+- [x] **2.6** Update `dashboard/page.tsx` to fetch from API (server-side fetch with cookie forwarding)
+- [x] **2.7** Update `projects/[id]/page.tsx` to fetch from API
+- [x] **2.8** Update client components that call project server actions to use `fetch()`
+- [x] **2.9** Delete `app/(app)/actions.ts` once all callers are migrated
 
 ---
 

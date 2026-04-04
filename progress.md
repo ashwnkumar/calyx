@@ -1860,3 +1860,17 @@ _This file is automatically maintained as development progresses. Each significa
 - Rewrote `SecretContext.tsx` to use API routes: `unlock()` and `checkPassphraseSetup()` now call `/api/v1/profile`, first-time setup calls `PUT /api/v1/profile/passphrase`
 - Removed top-level `import { createClient }` from SecretContext — only a temporary dynamic import remains inside `changePassphrase()` for env_vars (will be replaced in Phase 3 with bulk-update endpoint)
 - All existing consumers of `useSecrets` / `SecretProvider` unaffected — exported interface unchanged
+
+## 2026-04-04 - API Migration Phase 2: Project Endpoints
+
+- Created `GET /api/v1/projects` — lists projects with env_vars count, rate-limited (read tier)
+- Created `POST /api/v1/projects` — creates project with name/description validation, duplicate check, 201 response
+- Created `GET /api/v1/projects/:id` — returns project + env files, UUID validation on param
+- Created `PATCH /api/v1/projects/:id` — partial update (name and/or description), duplicate name check, description length validation (fixes old bug)
+- Created `DELETE /api/v1/projects/:id` — ownership verification before cascade delete
+- Migrated `add-project-dialog.tsx` from `createProject` server action → `POST /api/v1/projects`
+- Migrated `project-card.tsx` from `deleteProject` server action → `DELETE /api/v1/projects/:id`
+- Migrated `project-details-client.tsx` from `updateProjectName`/`updateProjectDescription` server actions → `PATCH /api/v1/projects/:id`
+- Migrated `project-details-client.tsx` refetchEnvFiles from direct Supabase client → `GET /api/v1/projects/:id`
+- Server-side pages (dashboard, project detail) kept using direct Supabase server client (efficient, no unnecessary HTTP hop)
+- `app/(app)/actions.ts` now has zero importers — dead code, will be deleted in Phase 6

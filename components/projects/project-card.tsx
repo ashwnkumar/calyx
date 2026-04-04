@@ -30,7 +30,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { deleteProject } from "@/app/(app)/actions";
+import type { ApiResponse } from "@/lib/types/api";
 
 type Project = {
   id: string;
@@ -70,7 +70,10 @@ export function ProjectCard({ project, onProjectDeleted }: ProjectCardProps) {
   const performDelete = async () => {
     setIsDeleting(true);
     try {
-      const result = await deleteProject(project.id);
+      const res = await fetch(`/api/v1/projects/${project.id}`, {
+        method: "DELETE",
+      });
+      const result: ApiResponse<{ id: string }> = await res.json();
       if (!result.success) throw new Error(result.error);
       toast.success(`Project "${project.name}" deleted successfully`);
       onProjectDeleted(project.id);

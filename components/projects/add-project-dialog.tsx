@@ -2,8 +2,8 @@
 
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { createProject } from "@/app/(app)/actions";
 import { validateProjectData } from "@/lib/validations/project";
+import type { ApiResponse, Project as ApiProject } from "@/lib/types/api";
 import {
   Dialog,
   DialogContent,
@@ -56,13 +56,19 @@ export function AddProjectDialog({
     }
 
     // Create FormData for Server Action
-    const formDataObj = new FormData();
-    formDataObj.append("name", formData.name.trim());
-    formDataObj.append("description", formData.description);
+    const payload = {
+      name: formData.name.trim(),
+      description: formData.description || undefined,
+    };
 
     startTransition(async () => {
       try {
-        const result = await createProject(formDataObj);
+        const res = await fetch("/api/v1/projects", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const result: ApiResponse<Project> = await res.json();
 
         if (result.success) {
           // Success - close dialog and notify parent
