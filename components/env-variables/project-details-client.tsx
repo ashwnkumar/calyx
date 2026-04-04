@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Plus, Pencil, Check, X } from "lucide-react";
+import { Plus, Pencil, Check, X, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,7 +14,6 @@ import {
   updateProjectName,
   updateProjectDescription,
 } from "@/app/(app)/actions";
-import { LockIndicator } from "./lock-indicator";
 import { AddEnvDialog } from "./add-env-dialog";
 import { EnvFileCard } from "./env-file-card";
 import { EmptyState } from "./empty-state";
@@ -42,19 +42,6 @@ type ProjectDetailsClientProps = {
   initialEnvFiles: EnvFile[];
 };
 
-/**
- * ProjectDetailsClient Component
- *
- * Main client component for project details page.
- * Displays environment files as cards.
- *
- * Features:
- * - Lock state management via SecretContext
- * - Add env file dialog
- * - Grid of env file cards
- * - Project name editing
- * - Empty state when no files
- */
 export function ProjectDetailsClient({
   project,
   initialEnvFiles,
@@ -72,9 +59,6 @@ export function ProjectDetailsClient({
   const [isSavingDescription, setIsSavingDescription] = useState(false);
   const { isUnlocked } = useSecrets();
 
-  /**
-   * Handle Add button click
-   */
   const handleAddClick = () => {
     if (!isUnlocked) {
       toast.error("Please unlock secrets first");
@@ -83,20 +67,11 @@ export function ProjectDetailsClient({
     setIsDialogOpen(true);
   };
 
-  /**
-   * Handle successful env file addition
-   */
   const handleEnvFileAdded = async (newFile: EnvFile) => {
-    // Optimistic update
     setEnvFiles((prev) => [newFile, ...prev]);
-
-    // Refetch to ensure consistency
     await refetchEnvFiles();
   };
 
-  /**
-   * Refetch env files from Supabase
-   */
   const refetchEnvFiles = async () => {
     try {
       const supabase = createClient();
@@ -107,11 +82,7 @@ export function ProjectDetailsClient({
         )
         .eq("project_id", project.id)
         .order("created_at", { ascending: false });
-
-      if (error) {
-        throw error;
-      }
-
+      if (error) throw error;
       setEnvFiles(data || []);
     } catch (error) {
       console.error("Failed to refetch env files:", error);
@@ -119,274 +90,212 @@ export function ProjectDetailsClient({
     }
   };
 
-  /**
-   * Handle env file deletion
-   */
   const handleEnvFileDeleted = async (fileId: string) => {
-    // Optimistic update
     setEnvFiles((prev) => prev.filter((f) => f.id !== fileId));
-
-    // Refetch to ensure consistency
     await refetchEnvFiles();
   };
 
-  /**
-   * Handle edit name button click
-   */
-  const handleEditNameClick = () => {
-    setIsEditingName(true);
-    setEditedName(project.name);
-  };
-
-  /**
-   * Handle cancel edit
-   */
-  const handleCancelEdit = () => {
-    setIsEditingName(false);
-    setEditedName(project.name);
-  };
-
-  /**
-   * Handle save edited name
-   */
   const handleSaveName = async () => {
     const trimmedName = editedName.trim();
-
     if (!trimmedName) {
       toast.error("Project name cannot be empty");
       return;
     }
-
     if (trimmedName === project.name) {
       setIsEditingName(false);
       return;
     }
-
     setIsSavingName(true);
-
     try {
       const result = await updateProjectName(project.id, trimmedName);
-
-      if (!result.success) {
-        throw new Error(result.error);
-      }
-
-      toast.success("Project name updated successfully");
+      if (!result.success) throw new Error(result.error);
+      toast.success("Project name updated");
       setIsEditingName(false);
       project.name = result.data.name;
     } catch (error: any) {
-      console.error("Update failed:", error);
       toast.error(error.message || "Failed to update project name");
     } finally {
       setIsSavingName(false);
     }
   };
 
-  /**
-   * Handle Enter key in name input
-   */
   const handleNameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      handleSaveName();
-    } else if (e.key === "Escape") {
-      handleCancelEdit();
+    if (e.key === "Enter") handleSaveName();
+    else if (e.key === "Escape") {
+      setIsEditingName(false);
+      setEditedName(project.name);
     }
   };
 
-  /**
-   * Handle edit description button click
-   */
-  const handleEditDescriptionClick = () => {
-    setIsEditingDescription(true);
-    setEditedDescription(project.description || "");
-  };
-
-  /**
-   * Handle cancel description edit
-   */
-  const handleCancelDescriptionEdit = () => {
-    setIsEditingDescription(false);
-    setEditedDescription(project.description || "");
-  };
-
-  /**
-   * Handle save edited description
-   */
   const handleSaveDescription = async () => {
-    const trimmedDescription = editedDescription.trim();
-
-    // Allow empty description (null)
-    if (trimmedDescription === (project.description || "")) {
+    const trimmed = editedDescription.trim();
+    if (trimmed === (project.description || "")) {
       setIsEditingDescription(false);
       return;
     }
-
     setIsSavingDescription(true);
-
     try {
       const result = await updateProjectDescription(
         project.id,
-        trimmedDescription || null,
+        trimmed || null,
       );
-
-      if (!result.success) {
-        throw new Error(result.error);
-      }
-
-      toast.success("Project description updated successfully");
+      if (!result.success) throw new Error(result.error);
+      toast.success("Description updated");
       setIsEditingDescription(false);
       project.description = result.data.description;
     } catch (error: any) {
-      console.error("Update failed:", error);
-      toast.error(error.message || "Failed to update project description");
+      toast.error(error.message || "Failed to update description");
     } finally {
       setIsSavingDescription(false);
     }
   };
 
-  /**
-   * Handle keyboard shortcuts in description textarea
-   */
   const handleDescriptionKeyDown = (
     e: React.KeyboardEvent<HTMLTextAreaElement>,
   ) => {
     if (e.key === "Escape") {
-      handleCancelDescriptionEdit();
+      setIsEditingDescription(false);
+      setEditedDescription(project.description || "");
     }
-    // Ctrl/Cmd + Enter to save
-    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
-      handleSaveDescription();
-    }
+    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") handleSaveDescription();
   };
 
   return (
-    <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 max-w-7xl">
-      {/* Page Header */}
-      <div className="mb-4 sm:mb-6">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 mb-4">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => router.push("/dashboard")}
-            aria-label="Back to projects"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div className="flex-1">
-            {isEditingName ? (
-              <div className="flex items-center gap-2 flex-1 min-w-0">
-                <Input
-                  value={editedName}
-                  onChange={(e) => setEditedName(e.target.value)}
-                  onKeyDown={handleNameKeyDown}
-                  disabled={isSavingName}
-                  className="text-2xl sm:text-3xl font-bold h-auto py-1 px-2"
-                  maxLength={100}
-                  autoFocus
-                />
+    <div>
+      {/* Breadcrumb */}
+      <nav className="flex items-center gap-1.5 text-sm text-muted-foreground mb-4">
+        <Link href="/dashboard" className="hover:text-foreground">
+          Dashboard
+        </Link>
+        <ChevronRight className="size-3.5" />
+        <span className="text-foreground font-medium truncate max-w-[200px]">
+          {project.name}
+        </span>
+      </nav>
+
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-6">
+        <div className="flex-1 min-w-0">
+          {/* Name */}
+          {isEditingName ? (
+            <div className="flex items-center gap-2">
+              <Input
+                value={editedName}
+                onChange={(e) => setEditedName(e.target.value)}
+                onKeyDown={handleNameKeyDown}
+                disabled={isSavingName}
+                className="text-2xl font-bold h-auto py-1 px-2"
+                maxLength={100}
+                autoFocus
+              />
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleSaveName}
+                disabled={isSavingName}
+                aria-label="Save name"
+              >
+                <Check className="size-4 text-green-600" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  setIsEditingName(false);
+                  setEditedName(project.name);
+                }}
+                disabled={isSavingName}
+                aria-label="Cancel edit"
+              >
+                <X className="size-4 text-muted-foreground" />
+              </Button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 group">
+              <h1 className="text-2xl sm:text-3xl font-bold truncate">
+                {project.name}
+              </h1>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsEditingName(true)}
+                className="size-7 opacity-0 group-hover:opacity-100"
+                aria-label="Edit project name"
+              >
+                <Pencil className="size-3.5" />
+              </Button>
+            </div>
+          )}
+
+          {/* Description */}
+          {isEditingDescription ? (
+            <div className="flex items-start gap-2 mt-2">
+              <Textarea
+                value={editedDescription}
+                onChange={(e) => setEditedDescription(e.target.value)}
+                onKeyDown={handleDescriptionKeyDown}
+                disabled={isSavingDescription}
+                className="text-sm resize-none"
+                placeholder="Add a description..."
+                rows={2}
+                maxLength={500}
+                autoFocus
+              />
+              <div className="flex flex-col gap-1">
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={handleSaveName}
-                  disabled={isSavingName}
-                  aria-label="Save name"
+                  onClick={handleSaveDescription}
+                  disabled={isSavingDescription}
+                  aria-label="Save description"
                 >
-                  <Check className="h-5 w-5 text-green-600" />
+                  <Check className="size-3.5 text-green-600" />
                 </Button>
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={handleCancelEdit}
-                  disabled={isSavingName}
+                  onClick={() => {
+                    setIsEditingDescription(false);
+                    setEditedDescription(project.description || "");
+                  }}
+                  disabled={isSavingDescription}
                   aria-label="Cancel edit"
                 >
-                  <X className="h-5 w-5 text-muted-foreground" />
+                  <X className="size-3.5 text-muted-foreground" />
                 </Button>
               </div>
-            ) : (
-              <div className="flex items-center gap-2 flex-1 min-w-0">
-                <h1 className="text-2xl sm:text-3xl font-bold truncate">
-                  {project.name}
-                </h1>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleEditNameClick}
-                  className="transition-opacity"
-                  aria-label="Edit project name"
-                >
-                  <Pencil className="h-4 w-4" />
-                </Button>
-              </div>
-            )}
-            {isEditingDescription ? (
-              <div className="flex items-start gap-2 mt-2">
-                <Textarea
-                  value={editedDescription}
-                  onChange={(e) => setEditedDescription(e.target.value)}
-                  onKeyDown={handleDescriptionKeyDown}
-                  disabled={isSavingDescription}
-                  className="text-sm resize-none"
-                  placeholder="Add a description for this project..."
-                  rows={2}
-                  maxLength={500}
-                  autoFocus
-                />
-                <div className="flex flex-col gap-1">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={handleSaveDescription}
-                    disabled={isSavingDescription}
-                    aria-label="Save description"
-                  >
-                    <Check className="h-4 w-4 text-green-600" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={handleCancelDescriptionEdit}
-                    disabled={isSavingDescription}
-                    aria-label="Cancel edit"
-                  >
-                    <X className="h-4 w-4 text-muted-foreground" />
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="flex items-start gap-2 mt-1 group">
-                {project.description ? (
-                  <p className="text-muted-foreground">{project.description}</p>
-                ) : (
-                  <p className="text-muted-foreground italic">No description</p>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 mt-1 group">
+              <p className="text-sm text-muted-foreground">
+                {project.description || (
+                  <span className="italic">No description</span>
                 )}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleEditDescriptionClick}
-                  className="transition-opacity h-6 w-6"
-                  aria-label="Edit project description"
-                >
-                  <Pencil className="h-3 w-3" />
-                </Button>
-              </div>
-            )}
-          </div>
-          <Button
-            onClick={handleAddClick}
-            disabled={!isUnlocked}
-            className="gap-2 w-full sm:w-auto"
-          >
-            <Plus className="h-4 w-4" />
-            <span className="sm:inline">Add Environment File</span>
-          </Button>
+              </p>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsEditingDescription(true)}
+                className="size-6 opacity-0 group-hover:opacity-100"
+                aria-label="Edit description"
+              >
+                <Pencil className="size-3" />
+              </Button>
+            </div>
+          )}
         </div>
+
+        <Button
+          onClick={handleAddClick}
+          disabled={!isUnlocked}
+          className="gap-1.5 w-full sm:w-auto shrink-0"
+        >
+          <Plus className="size-4" />
+          Add Environment File
+        </Button>
       </div>
 
-      {/* Lock Indicator */}
-      <LockIndicator isUnlocked={isUnlocked} />
-
-      {/* Add Environment File Dialog */}
+      {/* Add Dialog */}
       <AddEnvDialog
         projectId={project.id}
         open={isDialogOpen}
@@ -394,9 +303,9 @@ export function ProjectDetailsClient({
         onEnvFileAdded={handleEnvFileAdded}
       />
 
-      {/* Environment Files Grid or Empty State */}
+      {/* Env Files Grid or Empty State */}
       {envFiles.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mt-4 sm:mt-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           {envFiles.map((file) => (
             <EnvFileCard
               key={file.id}

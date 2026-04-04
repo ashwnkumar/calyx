@@ -16,6 +16,8 @@ import { Label } from "@/components/ui/label";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 
 export function LoginForm({
   className,
@@ -54,6 +56,14 @@ export function LoginForm({
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
+      {/* Branding — visible on mobile where the side panel is hidden */}
+      <div className="text-center lg:hidden">
+        <h1 className="text-2xl font-bold tracking-tight">Calyx</h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          Zero-knowledge secrets manager
+        </p>
+      </div>
+
       <Card>
         <CardHeader>
           <CardTitle className="text-2xl">Login</CardTitle>
@@ -76,15 +86,7 @@ export function LoginForm({
                 />
               </div>
               <div className="grid gap-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Password</Label>
-                  {/* <a
-                    href="/forgot-password"
-                    className="text-sm underline-offset-4 hover:underline text-muted-foreground"
-                  >
-                    Forgot password?
-                  </a> */}
-                </div>
+                <Label htmlFor="password">Password</Label>
                 <PasswordInput
                   id="password"
                   required
@@ -92,23 +94,31 @@ export function LoginForm({
                   onChange={(e) => setPassword(e.target.value)}
                 />
               </div>
-              {error && <p className="text-sm text-red-500">{error}</p>}
+              {error && <p className="text-sm text-destructive">{error}</p>}
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? "Logging in..." : "Login"}
               </Button>
               <div className="text-center text-sm">
-                Don't have an account?{" "}
-                <a
+                Don&apos;t have an account?{" "}
+                <Link
                   href="/register"
                   className="underline text-primary underline-offset-4"
                 >
                   Sign up
-                </a>
+                </Link>
               </div>
             </div>
           </form>
         </CardContent>
       </Card>
+
+      <Link
+        href="/"
+        className="flex items-center justify-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+      >
+        <ArrowLeft className="size-3.5" />
+        Back to home
+      </Link>
     </div>
   );
 }

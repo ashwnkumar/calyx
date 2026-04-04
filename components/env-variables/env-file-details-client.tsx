@@ -1,21 +1,21 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
-  ArrowLeft,
   Copy,
   Download,
   Edit,
   Save,
   X,
   Lock,
-  LockOpen,
   Pencil,
   Check,
   History,
+  ChevronRight,
 } from "lucide-react";
 import { toast } from "sonner";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -33,7 +33,6 @@ import {
   updateEnvFile,
   updateEnvFileName,
 } from "@/app/(app)/projects/[id]/env/[fileId]/actions";
-import { LockIndicator } from "./lock-indicator";
 
 type Project = {
   id: string;
@@ -57,13 +56,19 @@ type EnvFileDetailsClientProps = {
   envFile: EnvFile;
 };
 
-/**
- * EnvFileDetailsClient Component
- *
- * Displays and manages a single environment file.
- * Shows encrypted content when locked, decrypted content when unlocked.
- * Supports copy, download, and edit operations.
- */
+function LineNumbers({ count }: { count: number }) {
+  return (
+    <div
+      className="select-none text-right pr-3 border-r border-border/50 text-muted-foreground/50 font-mono text-xs sm:text-sm leading-relaxed"
+      aria-hidden="true"
+    >
+      {Array.from({ length: count }, (_, i) => (
+        <div key={i + 1}>{i + 1}</div>
+      ))}
+    </div>
+  );
+}
+
 export function EnvFileDetailsClient({
   project,
   envFile,
@@ -80,7 +85,11 @@ export function EnvFileDetailsClient({
   const [editedName, setEditedName] = useState(envFile.name);
   const [isSavingName, setIsSavingName] = useState(false);
 
-  // Helper function to trigger file download
+  const lineCount = useMemo(() => {
+    if (!decryptedContent) return 0;
+    return decryptedContent.split("\n").length;
+  }, [decryptedContent]);
+
   const triggerDownload = (filename: string, content: string) => {
     const blob = new Blob([content], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
@@ -88,15 +97,12 @@ export function EnvFileDetailsClient({
     anchor.href = url;
     anchor.download = filename;
     anchor.style.display = "none";
-
     document.body.appendChild(anchor);
     anchor.click();
     document.body.removeChild(anchor);
-
     setTimeout(() => URL.revokeObjectURL(url), 100);
   };
 
-  // Decrypt content when unlocked
   useEffect(() => {
     if (isUnlocked && cryptoKey) {
       decryptContent();
@@ -108,7 +114,6 @@ export function EnvFileDetailsClient({
 
   const decryptContent = async () => {
     if (!cryptoKey) return;
-
     setIsDecrypting(true);
     try {
       const content = await decrypt(
@@ -127,41 +132,23 @@ export function EnvFileDetailsClient({
   };
 
   const handleCopy = async () => {
-    const content = isUnlocked
-      ? decryptedContent
-      : `${currentEnvFile.iv}:${currentEnvFile.ciphertext}`;
-    if (!content) {
-      toast.error("No content to copy");
+    if (!isUnlocked || !decryptedContent) {
+      toast.error("Unlock secrets to copy content");
       return;
     }
-
-    const success = await copyToClipboard(content);
-    if (success) {
-      toast.success(
-        isUnlocked
-          ? "Decrypted content copied to clipboard"
-          : "Encrypted content copied to clipboard",
-      );
-    } else {
-      toast.error("Failed to copy to clipboard");
-    }
+    const success = await copyToClipboard(decryptedContent);
+    if (success) toast.success("Copied to clipboard");
+    else toast.error("Failed to copy to clipboard");
   };
 
   const handleDownload = () => {
-    const content = isUnlocked
-      ? decryptedContent
-      : `${currentEnvFile.iv}:${currentEnvFile.ciphertext}`;
-    if (!content) {
-      toast.error("No content to download");
+    if (!isUnlocked || !decryptedContent) {
+      toast.error("Unlock secrets to download");
       return;
     }
-
-    const filename = isUnlocked
-      ? `${project.name}-${currentEnvFile.name}.env`
-      : `${project.name}-${currentEnvFile.name}.encrypted.txt`;
-
-    triggerDownload(filename, content);
-    toast.success("File downloaded successfully");
+    const filename = `${project.name}-${currentEnvFile.name}.env`;
+    triggerDownload(filename, decryptedContent);
+    toast.success("File downloaded");
   };
 
   const handleEditClick = () => {
@@ -177,87 +164,55 @@ export function EnvFileDetailsClient({
 
   const handleSaveEdit = async () => {
     if (!cryptoKey) {
-      toast.error("Secrets are locked. Cannot save changes.");
+      toast.error("Secrets are locked");
       return;
     }
-
     if (!editedContent.trim()) {
       toast.error("Content cannot be empty");
       return;
     }
-
     setIsSaving(true);
-
     try {
-      // Encrypt the edited content
       const { iv, ciphertext } = await encrypt(editedContent, cryptoKey);
-
-      // Call server action to update
       const result = await updateEnvFile(project.id, currentEnvFile.id, {
         iv,
         ciphertext,
       });
-
-      if (!result.success) {
-        throw new Error(result.error);
-      }
-
-      // Update local state
+      if (!result.success) throw new Error(result.error);
       setCurrentEnvFile(result.data);
       setDecryptedContent(editedContent);
       setIsEditing(false);
       setEditedContent("");
-
-      toast.success("Environment file updated successfully");
+      toast.success("Environment file updated");
     } catch (error: any) {
-      console.error("Save failed:", error);
       toast.error(error.message || "Failed to save changes");
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleEditNameClick = () => {
-    setIsEditingName(true);
-    setEditedName(currentEnvFile.name);
-  };
-
-  const handleCancelNameEdit = () => {
-    setIsEditingName(false);
-    setEditedName(currentEnvFile.name);
-  };
-
   const handleSaveName = async () => {
     const trimmedName = editedName.trim();
-
     if (!trimmedName) {
       toast.error("Name cannot be empty");
       return;
     }
-
     if (trimmedName === currentEnvFile.name) {
       setIsEditingName(false);
       return;
     }
-
     setIsSavingName(true);
-
     try {
       const result = await updateEnvFileName(
         project.id,
         currentEnvFile.id,
         trimmedName,
       );
-
-      if (!result.success) {
-        throw new Error(result.error);
-      }
-
-      toast.success("Environment file name updated successfully");
+      if (!result.success) throw new Error(result.error);
+      toast.success("Name updated");
       setIsEditingName(false);
       setCurrentEnvFile(result.data);
     } catch (error: any) {
-      console.error("Update failed:", error);
       toast.error(error.message || "Failed to update name");
     } finally {
       setIsSavingName(false);
@@ -265,109 +220,117 @@ export function EnvFileDetailsClient({
   };
 
   const handleNameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      handleSaveName();
-    } else if (e.key === "Escape") {
-      handleCancelNameEdit();
+    if (e.key === "Enter") handleSaveName();
+    else if (e.key === "Escape") {
+      setIsEditingName(false);
+      setEditedName(currentEnvFile.name);
     }
   };
 
   const formattedDate = new Date(currentEnvFile.created_at).toLocaleDateString(
     "en-US",
-    {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    },
+    { year: "numeric", month: "long", day: "numeric" },
   );
 
   return (
-    <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 max-w-5xl">
-      {/* Page Header */}
-      <div className="mb-4 sm:mb-6">
-        {/* Back button and title row */}
-        <div className="flex items-start gap-2 sm:gap-4 mb-3 sm:mb-4">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => router.push(`/projects/${project.id}`)}
-            aria-label="Back to project"
-            className="shrink-0 mt-1"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div className="flex-1 min-w-0">
-            {isEditingName ? (
-              <div className="flex items-center gap-2">
-                <Input
-                  value={editedName}
-                  onChange={(e) => setEditedName(e.target.value)}
-                  onKeyDown={handleNameKeyDown}
-                  disabled={isSavingName}
-                  className="text-xl sm:text-2xl lg:text-3xl font-bold h-auto py-1 px-2"
-                  maxLength={100}
-                  autoFocus
-                />
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleSaveName}
-                  disabled={isSavingName}
-                  aria-label="Save name"
-                  className="shrink-0"
-                >
-                  <Check className="h-5 w-5 text-green-600" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleCancelNameEdit}
-                  disabled={isSavingName}
-                  aria-label="Cancel edit"
-                  className="shrink-0"
-                >
-                  <X className="h-5 w-5 text-muted-foreground" />
-                </Button>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2 group">
-                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold truncate">
-                  {currentEnvFile.name}
-                </h1>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleEditNameClick}
-                  className=" transition-opacity shrink-0"
-                  aria-label="Edit file name"
-                >
-                  <Pencil className="h-4 w-4" />
-                </Button>
-                {isUnlocked ? (
-                  <LockOpen className="h-5 w-5 text-green-600 shrink-0" />
-                ) : (
-                  <Lock className="h-5 w-5 text-muted-foreground shrink-0" />
-                )}
-              </div>
-            )}
-            <p className="text-sm text-muted-foreground mt-1 truncate">
-              {project.name} • Created {formattedDate}
-            </p>
-          </div>
+    <div>
+      {/* Breadcrumb */}
+      <nav className="flex items-center gap-1.5 text-sm text-muted-foreground mb-4 flex-wrap">
+        <Link href="/dashboard" className="hover:text-foreground">
+          Dashboard
+        </Link>
+        <ChevronRight className="size-3.5 shrink-0" />
+        <Link
+          href={`/projects/${project.id}`}
+          className="hover:text-foreground truncate max-w-[120px]"
+        >
+          {project.name}
+        </Link>
+        <ChevronRight className="size-3.5 shrink-0" />
+        <span className="text-foreground font-medium truncate max-w-[150px]">
+          {currentEnvFile.name}
+        </span>
+      </nav>
+
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-4">
+        <div className="flex-1 min-w-0">
+          {isEditingName ? (
+            <div className="flex items-center gap-2">
+              <Input
+                value={editedName}
+                onChange={(e) => setEditedName(e.target.value)}
+                onKeyDown={handleNameKeyDown}
+                disabled={isSavingName}
+                className="text-xl sm:text-2xl font-bold h-auto py-1 px-2"
+                maxLength={100}
+                autoFocus
+              />
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleSaveName}
+                disabled={isSavingName}
+                aria-label="Save name"
+              >
+                <Check className="size-4 text-green-600" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  setIsEditingName(false);
+                  setEditedName(currentEnvFile.name);
+                }}
+                disabled={isSavingName}
+                aria-label="Cancel edit"
+              >
+                <X className="size-4 text-muted-foreground" />
+              </Button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 group">
+              <h1 className="text-xl sm:text-2xl font-bold truncate">
+                {currentEnvFile.name}
+              </h1>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  setIsEditingName(true);
+                  setEditedName(currentEnvFile.name);
+                }}
+                className="size-7 opacity-0 group-hover:opacity-100"
+                aria-label="Edit file name"
+              >
+                <Pencil className="size-3.5" />
+              </Button>
+            </div>
+          )}
+          <p className="text-sm text-muted-foreground mt-1">
+            Created {formattedDate}
+          </p>
         </div>
 
-        {/* Action buttons - responsive layout */}
-        <div className="flex flex-wrap gap-2 ml-0 sm:ml-14">
-          <Button
-            onClick={handleCopy}
-            className="gap-2 flex-1 sm:flex-none"
-            size="sm"
-          >
-            <Copy className="h-4 w-4" />
-            <span className="hidden sm:inline">Copy</span>
-          </Button>
+        {/* Action buttons — fixed width on desktop, no flex-1 stretching */}
+        <div className="flex flex-wrap gap-2">
+          {isUnlocked && (
+            <>
+              <Button onClick={handleCopy} size="sm" className="gap-1.5">
+                <Copy className="size-3.5" />
+                Copy
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handleDownload}
+                size="sm"
+                className="gap-1.5"
+              >
+                <Download className="size-3.5" />
+                Download
+              </Button>
+            </>
+          )}
           <Button
             variant="secondary"
             onClick={() =>
@@ -375,30 +338,21 @@ export function EnvFileDetailsClient({
                 `/projects/${project.id}/env/${currentEnvFile.id}/history`,
               )
             }
-            className="gap-2 flex-1 sm:flex-none"
             size="sm"
+            className="gap-1.5"
           >
-            <History className="h-4 w-4" />
-            <span className="hidden sm:inline">History</span>
-          </Button>{" "}
-          <Button
-            variant="outline"
-            onClick={handleDownload}
-            className="gap-2 flex-1 sm:flex-none"
-            size="sm"
-          >
-            <Download className="h-4 w-4" />
-            <span className="hidden sm:inline">Download</span>
+            <History className="size-3.5" />
+            History
           </Button>
           {isUnlocked && !isEditing && (
             <Button
               variant="outline"
               onClick={handleEditClick}
-              className="gap-2 flex-1 sm:flex-none"
               size="sm"
+              className="gap-1.5"
             >
-              <Edit className="h-4 w-4" />
-              <span className="hidden sm:inline">Edit</span>
+              <Edit className="size-3.5" />
+              Edit
             </Button>
           )}
           {isEditing && (
@@ -406,20 +360,20 @@ export function EnvFileDetailsClient({
               <Button
                 onClick={handleSaveEdit}
                 disabled={isSaving}
-                className="gap-2 flex-1 sm:flex-none"
                 size="sm"
+                className="gap-1.5"
               >
-                <Save className="h-4 w-4" />
+                <Save className="size-3.5" />
                 {isSaving ? "Saving..." : "Save"}
               </Button>
               <Button
                 variant="outline"
                 onClick={handleCancelEdit}
                 disabled={isSaving}
-                className="gap-2 flex-1 sm:flex-none"
                 size="sm"
+                className="gap-1.5"
               >
-                <X className="h-4 w-4" />
+                <X className="size-3.5" />
                 Cancel
               </Button>
             </>
@@ -427,27 +381,26 @@ export function EnvFileDetailsClient({
         </div>
       </div>
 
-      {/* Lock Indicator */}
-      <LockIndicator isUnlocked={isUnlocked} />
-
-      {/* Content Display */}
-      <Card className="mt-4 sm:mt-6">
-        <CardHeader>
-          <CardTitle className="text-lg sm:text-xl">
-            {isUnlocked ? "Environment Variables" : "Encrypted Content"}
-          </CardTitle>
-          <CardDescription className="text-sm">
+      {/* Content */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">
             {isUnlocked
               ? isEditing
-                ? "Edit your environment variables below"
-                : "Your decrypted environment variables"
-              : "Unlock to view decrypted content"}
-          </CardDescription>
+                ? "Editing"
+                : "Environment Variables"
+              : "Encrypted Content"}
+          </CardTitle>
+          {!isUnlocked && (
+            <CardDescription>
+              Unlock your secrets from the header to view and edit this file
+            </CardDescription>
+          )}
         </CardHeader>
         <CardContent>
           {isDecrypting ? (
-            <div className="flex items-center justify-center py-8 sm:py-12">
-              <div className="text-muted-foreground text-sm">Decrypting...</div>
+            <div className="flex items-center justify-center py-12">
+              <p className="text-sm text-muted-foreground">Decrypting...</p>
             </div>
           ) : isUnlocked && decryptedContent !== null ? (
             isEditing ? (
@@ -455,23 +408,24 @@ export function EnvFileDetailsClient({
                 value={editedContent}
                 onChange={(e) => setEditedContent(e.target.value)}
                 disabled={isSaving}
-                className="font-mono text-xs sm:text-sm min-h-[300px] sm:min-h-[400px] resize-none"
+                className="font-mono text-xs sm:text-sm min-h-[350px] resize-none leading-relaxed"
                 placeholder="Paste your .env file content here..."
               />
             ) : (
-              <pre className="font-mono text-xs sm:text-sm bg-muted p-3 sm:p-4 rounded-md overflow-x-auto whitespace-pre-wrap break-words">
-                {decryptedContent}
-              </pre>
+              <div className="flex bg-muted rounded-md overflow-hidden">
+                <LineNumbers count={lineCount} />
+                <pre className="font-mono text-xs sm:text-sm p-3 sm:p-4 overflow-x-auto whitespace-pre-wrap wrap-break-word flex-1 leading-relaxed">
+                  {decryptedContent}
+                </pre>
+              </div>
             )
           ) : (
-            <div className="bg-muted p-3 sm:p-4 rounded-md">
-              <pre className="font-mono text-xs sm:text-sm text-muted-foreground overflow-x-auto whitespace-pre-wrap break-all">
-                {currentEnvFile.ciphertext.substring(0, 200)}
-                {currentEnvFile.ciphertext.length > 200 && "..."}
-              </pre>
-              <p className="text-xs sm:text-sm text-muted-foreground mt-3 sm:mt-4">
-                This content is encrypted. Unlock your secrets to view the
-                decrypted content.
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="rounded-full bg-muted p-3 mb-3">
+                <Lock className="size-5 text-muted-foreground" />
+              </div>
+              <p className="text-sm text-muted-foreground">
+                This content is encrypted. Unlock to view.
               </p>
             </div>
           )}

@@ -4,7 +4,6 @@ import { createClient } from "@/lib/supabase/server";
 import { AppHeader } from "@/components/app-header";
 import { AppFooter } from "@/components/app-footer";
 import { SecretProvider } from "@/lib/contexts/SecretContext";
-import { PassphraseStatusAlert } from "@/components/passphrase-status-alert";
 
 export const metadata: Metadata = {
   title: "Dashboard",
@@ -22,7 +21,6 @@ export default async function AppLayout({
     error,
   } = await supabase.auth.getUser();
 
-  // If user is not logged in, redirect to login
   if (error || !user) {
     redirect("/login");
   }
@@ -30,9 +28,8 @@ export default async function AppLayout({
   return (
     <SecretProvider>
       <div className="min-h-screen flex flex-col">
-        <AppHeader isLoggedIn={true} />
+        <AppHeader userEmail={user.email ?? ""} />
         <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 py-4 sm:py-6 space-y-3 sm:space-y-4">
-          <PassphraseStatusAlert />
           {children}
         </main>
         <AppFooter />

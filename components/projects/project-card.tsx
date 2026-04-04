@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
-import { FileKey, Trash2 } from "lucide-react";
+import { FileKey, MoreVertical, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   Card,
@@ -14,6 +14,12 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -51,39 +57,21 @@ export function ProjectCard({ project, onProjectDeleted }: ProjectCardProps) {
     router.push(`/projects/${project.id}`);
   };
 
-  const handleDeleteClick = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent card click navigation
-    setIsDeleteDialogOpen(true);
-  };
-
   const handleConfirmDelete = () => {
     const envVarCount = project.env_vars?.[0]?.count ?? 0;
-
-    // If project has env vars, show additional warning
     if (envVarCount > 0) {
       setIsDeleteDialogOpen(false);
       setIsEnvVarsWarningOpen(true);
     } else {
-      // No env vars, proceed with deletion
       performDelete();
     }
   };
 
-  const handleFinalConfirmDelete = () => {
-    setIsEnvVarsWarningOpen(false);
-    performDelete();
-  };
-
   const performDelete = async () => {
     setIsDeleting(true);
-
     try {
       const result = await deleteProject(project.id);
-
-      if (!result.success) {
-        throw new Error(result.error);
-      }
-
+      if (!result.success) throw new Error(result.error);
       toast.success(`Project "${project.name}" deleted successfully`);
       onProjectDeleted(project.id);
     } catch (error: any) {
@@ -92,65 +80,76 @@ export function ProjectCard({ project, onProjectDeleted }: ProjectCardProps) {
     } finally {
       setIsDeleting(false);
       setIsDeleteDialogOpen(false);
+      setIsEnvVarsWarningOpen(false);
     }
   };
 
-  const formattedDate = formatDistanceToNow(new Date(project.created_at), {
+  const createdDate = formatDistanceToNow(new Date(project.created_at), {
     addSuffix: true,
   });
-
-  const lastUpdatedDate = formatDistanceToNow(new Date(project.updated_at), {
+  const updatedDate = formatDistanceToNow(new Date(project.updated_at), {
     addSuffix: true,
   });
-
-  // Extract count from the aggregated query result
   const envVarCount = project.env_vars?.[0]?.count ?? 0;
 
   return (
     <>
       <Card
         onClick={handleCardClick}
-        className="cursor-pointer transition-all hover:shadow-md hover:border-primary/50 relative group"
+        className="cursor-pointer hover:shadow-md hover:-translate-y-0.5 hover:border-primary/30"
       >
-        <CardHeader>
+        <CardHeader className="pb-2">
           <div className="flex items-start justify-between gap-2">
-            <CardTitle className="text-lg sm:text-xl flex-1 break-words">
+            <CardTitle className="text-lg flex-1 wrap-break-word leading-snug">
               {project.name}
             </CardTitle>
-            <div className="flex items-center gap-2">
-              <Badge variant="secondary" className="gap-1.5">
-                <FileKey className="h-3.5 w-3.5" />
+            <div className="flex items-center gap-1.5 shrink-0">
+              <Badge variant="secondary" className="gap-1 text-xs">
+                <FileKey className="size-3" />
                 {envVarCount}
               </Badge>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={handleDeleteClick}
-                disabled={isDeleting}
-                aria-label={`Delete ${project.name}`}
-              >
-                <Trash2 className="h-4 w-4 text-destructive" />
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-7"
+                    onClick={(e) => e.stopPropagation()}
+                    aria-label={`Actions for ${project.name}`}
+                  >
+                    <MoreVertical className="size-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="end"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <DropdownMenuItem
+                    onClick={() => setIsDeleteDialogOpen(true)}
+                    className="text-destructive focus:text-destructive cursor-pointer"
+                  >
+                    <Trash2 className="size-4 mr-2" />
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
           {project.description && (
-            <CardDescription className="line-clamp-2">
+            <CardDescription className="line-clamp-2 mt-1">
               {project.description}
             </CardDescription>
           )}
         </CardHeader>
-        <CardContent className="flex flex-col items-start ">
-          {/* <p className="text-sm text-muted-foreground">
-            Last Updated {lastUpdatedDate}
-          </p> */}
-          <p className="text-sm text-muted-foreground">
-            Created {formattedDate}
-          </p>
+        <CardContent>
+          <div className="flex flex-col gap-0.5 text-xs text-muted-foreground">
+            <span>Updated {updatedDate}</span>
+            <span>Created {createdDate}</span>
+          </div>
         </CardContent>
       </Card>
 
-      {/* Initial Delete Confirmation Dialog */}
+      {/* Delete Confirmation */}
       <AlertDialog
         open={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
@@ -159,8 +158,8 @@ export function ProjectCard({ project, onProjectDeleted }: ProjectCardProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Project</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{project.name}"? This action
-              cannot be undone.
+              Are you sure you want to delete &ldquo;{project.name}&rdquo;? This
+              action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -175,7 +174,7 @@ export function ProjectCard({ project, onProjectDeleted }: ProjectCardProps) {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Environment Variables Warning Dialog */}
+      {/* Env Vars Warning */}
       <AlertDialog
         open={isEnvVarsWarningOpen}
         onOpenChange={setIsEnvVarsWarningOpen}
@@ -206,7 +205,7 @@ export function ProjectCard({ project, onProjectDeleted }: ProjectCardProps) {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleFinalConfirmDelete}
+              onClick={performDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Yes, Delete Everything

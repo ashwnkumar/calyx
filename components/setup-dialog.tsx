@@ -160,10 +160,7 @@ export function SetupDialog({ open, onOpenChange }: SetupDialogProps) {
                   }
                 />
                 {errors.passphrase && (
-                  <p
-                    id="passphrase-error"
-                    className="text-sm text-red-600 dark:text-red-400"
-                  >
+                  <p id="passphrase-error" className="text-sm text-destructive">
                     {errors.passphrase}
                   </p>
                 )}
@@ -187,7 +184,7 @@ export function SetupDialog({ open, onOpenChange }: SetupDialogProps) {
                 {errors.confirmPassphrase && (
                   <p
                     id="confirm-passphrase-error"
-                    className="text-sm text-red-600 dark:text-red-400"
+                    className="text-sm text-destructive"
                   >
                     {errors.confirmPassphrase}
                   </p>

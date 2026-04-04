@@ -1,9 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { LoginForm } from "@/components/login-form";
-import { Button } from "@/components/ui/button";
-import { ThemeSwitcher } from "@/components/theme-switcher";
-import { Info } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Login",
@@ -12,11 +8,5 @@ export const metadata: Metadata = {
 };
 
 export default function Page() {
-  return (
-    <div className="flex flex-1 items-center justify-center p-6 md:p-10">
-      <div className="w-full max-w-sm">
-        <LoginForm />
-      </div>
-    </div>
-  );
+  return <LoginForm />;
 }

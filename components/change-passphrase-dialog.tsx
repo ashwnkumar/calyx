@@ -9,26 +9,21 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/ui/password-input";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { toast } from "sonner";
 
 export function ChangePassphraseDialog() {
   const { changePassphrase, isUnlocked } = useSecrets();
   const [open, setOpen] = useState(false);
-  const [lockedAlertOpen, setLockedAlertOpen] = useState(false);
   const [oldPassphrase, setOldPassphrase] = useState("");
   const [newPassphrase, setNewPassphrase] = useState("");
   const [confirmPassphrase, setConfirmPassphrase] = useState("");
@@ -52,9 +47,7 @@ export function ChangePassphraseDialog() {
     try {
       await changePassphrase(oldPassphrase, newPassphrase);
       setOpen(false);
-      setOldPassphrase("");
-      setNewPassphrase("");
-      setConfirmPassphrase("");
+      resetForm();
     } catch (error) {
       // Error already handled in context
     } finally {
@@ -62,53 +55,52 @@ export function ChangePassphraseDialog() {
     }
   };
 
+  const resetForm = () => {
+    setOldPassphrase("");
+    setNewPassphrase("");
+    setConfirmPassphrase("");
+  };
+
+  const handleOpenChange = (value: boolean) => {
+    setOpen(value);
+    if (!value) resetForm();
+  };
+
   return (
     <>
-      <Button
-        variant="outline"
-        onClick={() => (isUnlocked ? setOpen(true) : setLockedAlertOpen(true))}
-      >
-        Change Passphrase
-      </Button>
+      {!isUnlocked ? (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span tabIndex={0} className="inline-block">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled
+                  className="pointer-events-none"
+                >
+                  Change Passphrase
+                </Button>
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Unlock your secrets first to change passphrase</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      ) : (
+        <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
+          Change Passphrase
+        </Button>
+      )}
 
-      <AlertDialog open={lockedAlertOpen} onOpenChange={setLockedAlertOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>App is Locked</AlertDialogTitle>
-            <AlertDialogDescription>
-              Please unlock the app using your master password to access this
-              feature.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogAction onClick={() => setLockedAlertOpen(false)}>
-              OK
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogContent className="sm:max-w-[425px]">
-          <div
-            role="form"
-            onKeyDown={(e) => {
-              if (
-                e.key === "Enter" &&
-                oldPassphrase &&
-                newPassphrase &&
-                confirmPassphrase &&
-                !isSubmitting
-              ) {
-                handleSubmit(e as unknown as React.FormEvent);
-              }
-            }}
-          >
+          <form onSubmit={handleSubmit}>
             <DialogHeader>
               <DialogTitle>Change Master Passphrase</DialogTitle>
               <DialogDescription>
-                Update your master passphrase. All encrypted data will be
-                re-encrypted with the new passphrase.
+                All encrypted data will be re-encrypted with the new passphrase.
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
@@ -129,6 +121,7 @@ export function ChangePassphraseDialog() {
                   value={newPassphrase}
                   onChange={(e) => setNewPassphrase(e.target.value)}
                   autoComplete="off"
+                  placeholder="At least 8 characters"
                   disabled={isSubmitting}
                 />
               </div>
@@ -149,20 +142,24 @@ export function ChangePassphraseDialog() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setOpen(false)}
+                onClick={() => handleOpenChange(false)}
                 disabled={isSubmitting}
               >
                 Cancel
               </Button>
               <Button
-                type="button"
-                onClick={handleSubmit}
-                disabled={isSubmitting}
+                type="submit"
+                disabled={
+                  isSubmitting ||
+                  !oldPassphrase ||
+                  !newPassphrase ||
+                  !confirmPassphrase
+                }
               >
                 {isSubmitting ? "Changing..." : "Change Passphrase"}
               </Button>
             </DialogFooter>
-          </div>
+          </form>
         </DialogContent>
       </Dialog>
     </>
