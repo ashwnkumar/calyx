@@ -25,10 +25,18 @@ export default async function AppLayout({
     redirect("/login");
   }
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("is_admin")
+    .eq("id", user.id)
+    .single();
+
+  const isAdmin = profile?.is_admin === true;
+
   return (
     <SecretProvider>
       <div className="min-h-screen flex flex-col">
-        <AppHeader userEmail={user.email ?? ""} />
+        <AppHeader userEmail={user.email ?? ""} isAdmin={isAdmin} />
         <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 py-4 sm:py-6 space-y-3 sm:space-y-4">
           {children}
         </main>
