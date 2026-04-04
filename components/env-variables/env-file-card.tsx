@@ -28,7 +28,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { deleteEnvFiles } from "@/app/(app)/projects/[id]/actions";
+import type { ApiResponse } from "@/lib/types/api";
 
 type EnvFile = {
   id: string;
@@ -64,7 +64,12 @@ export function EnvFileCard({
     setIsDeleting(true);
     setIsDeleteDialogOpen(false);
     try {
-      const result = await deleteEnvFiles(projectId, [envFile.id]);
+      const res = await fetch(`/api/v1/projects/${projectId}/env`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: [envFile.id] }),
+      });
+      const result: ApiResponse<{ count: number }> = await res.json();
       if (!result.success) throw new Error(result.error);
       toast.success(`Deleted environment file: ${envFile.name}`);
       onDeleted(envFile.id);

@@ -29,10 +29,7 @@ import {
 import { useSecrets } from "@/lib/contexts/SecretContext";
 import { decrypt, encrypt } from "@/lib/crypto";
 import { copyToClipboard } from "@/lib/clipboard-utils";
-import {
-  updateEnvFile,
-  updateEnvFileName,
-} from "@/app/(app)/projects/[id]/env/[fileId]/actions";
+import type { ApiResponse, EnvFile as ApiEnvFile } from "@/lib/types/api";
 
 type Project = {
   id: string;
@@ -174,10 +171,15 @@ export function EnvFileDetailsClient({
     setIsSaving(true);
     try {
       const { iv, ciphertext } = await encrypt(editedContent, cryptoKey);
-      const result = await updateEnvFile(project.id, currentEnvFile.id, {
-        iv,
-        ciphertext,
-      });
+      const res = await fetch(
+        `/api/v1/projects/${project.id}/env/${currentEnvFile.id}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ iv, ciphertext }),
+        },
+      );
+      const result: ApiResponse<EnvFile> = await res.json();
       if (!result.success) throw new Error(result.error);
       setCurrentEnvFile(result.data);
       setDecryptedContent(editedContent);
@@ -203,11 +205,15 @@ export function EnvFileDetailsClient({
     }
     setIsSavingName(true);
     try {
-      const result = await updateEnvFileName(
-        project.id,
-        currentEnvFile.id,
-        trimmedName,
+      const res = await fetch(
+        `/api/v1/projects/${project.id}/env/${currentEnvFile.id}/name`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: trimmedName }),
+        },
       );
+      const result: ApiResponse<EnvFile> = await res.json();
       if (!result.success) throw new Error(result.error);
       toast.success("Name updated");
       setIsEditingName(false);

@@ -9,11 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useSecrets } from "@/lib/contexts/SecretContext";
-import { createClient } from "@/lib/supabase/client";
-import {
-  updateProjectName,
-  updateProjectDescription,
-} from "@/app/(app)/actions";
+import type { ApiResponse } from "@/lib/types/api";
 import { AddEnvDialog } from "./add-env-dialog";
 import { EnvFileCard } from "./env-file-card";
 import { EmptyState } from "./empty-state";
@@ -74,16 +70,11 @@ export function ProjectDetailsClient({
 
   const refetchEnvFiles = async () => {
     try {
-      const supabase = createClient();
-      const { data, error } = await supabase
-        .from("env_vars")
-        .select(
-          "id, project_id, user_id, name, iv, ciphertext, created_at, updated_at",
-        )
-        .eq("project_id", project.id)
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      setEnvFiles(data || []);
+      const res = await fetch(`/api/v1/projects/${project.id}`);
+      const json: ApiResponse<{ project: Project; env_files: EnvFile[] }> =
+        await res.json();
+      if (!json.success) throw new Error(json.error);
+      setEnvFiles(json.data.env_files);
     } catch (error) {
       console.error("Failed to refetch env files:", error);
       toast.warning("Failed to refresh data. Showing cached results.");
@@ -107,7 +98,16 @@ export function ProjectDetailsClient({
     }
     setIsSavingName(true);
     try {
-      const result = await updateProjectName(project.id, trimmedName);
+      const res = await fetch(`/api/v1/projects/${project.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: trimmedName }),
+      });
+      const result: ApiResponse<{
+        id: string;
+        name: string;
+        description: string | null;
+      }> = await res.json();
       if (!result.success) throw new Error(result.error);
       toast.success("Project name updated");
       setIsEditingName(false);
@@ -135,10 +135,16 @@ export function ProjectDetailsClient({
     }
     setIsSavingDescription(true);
     try {
-      const result = await updateProjectDescription(
-        project.id,
-        trimmed || null,
-      );
+      const res = await fetch(`/api/v1/projects/${project.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ description: trimmed || null }),
+      });
+      const result: ApiResponse<{
+        id: string;
+        name: string;
+        description: string | null;
+      }> = await res.json();
       if (!result.success) throw new Error(result.error);
       toast.success("Description updated");
       setIsEditingDescription(false);

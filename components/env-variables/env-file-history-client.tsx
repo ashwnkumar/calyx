@@ -18,11 +18,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useSecrets } from "@/lib/contexts/SecretContext";
 import { decrypt } from "@/lib/crypto";
-import {
-  getEnvVarHistory,
-  getEnvVarVersion,
-  restoreEnvVarVersion,
-} from "@/app/(app)/projects/[id]/actions";
+import type { ApiResponse } from "@/lib/types/api";
 import { generateDiff, getDiffStats, type DiffLine } from "@/lib/diff-utils";
 
 type Project = {
@@ -95,7 +91,8 @@ export function EnvFileHistoryClient({
   async function loadHistory() {
     setLoading(true);
     try {
-      const result = await getEnvVarHistory(envFile.id);
+      const res = await fetch(`/api/v1/env/${envFile.id}/versions`);
+      const result: ApiResponse<EnvVarVersion[]> = await res.json();
 
       if (result.success) {
         setVersions(result.data);
@@ -194,7 +191,11 @@ export function EnvFileHistoryClient({
 
     setIsRestoring(true);
     try {
-      const result = await restoreEnvVarVersion(envFile.id, versionId);
+      const res = await fetch(
+        `/api/v1/env/${envFile.id}/versions/${versionId}/restore`,
+        { method: "POST" },
+      );
+      const result: ApiResponse<{ restored: boolean }> = await res.json();
 
       if (result.success) {
         toast.success("Version restored successfully");

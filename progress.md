@@ -1842,3 +1842,83 @@ _This file is automatically maintained as development progresses. Each significa
 - `components/change-passphrase-dialog.tsx` - New dialog component
 - `app/(app)/settings/page.tsx` - New settings page
 - `components/app-header.tsx` - Added Settings navigation link
+
+## 2026-04-04 - API Migration Phase 0: Foundation & Shared Infrastructure
+
+- Fixed broken middleware: renamed `proxy.ts` → `middleware.ts`, exported as `middleware` (was `proxy` — Next.js never picked it up)
+- Created `lib/types/api.ts` — shared `ApiResponse<T>`, `ApiError`, and domain types (`Project`, `EnvFile`, `EnvVarVersion`, `Profile`)
+- Created `lib/api/auth.ts` — `authenticateRequest()` centralizes Supabase session auth for all route handlers
+- Created `lib/api/response.ts` — `success()` / `error()` helpers with security headers baked in
+- Created `lib/api/validation.ts` — `validateUUID`, `validateBase64`, `validateRequiredString`, `validateOptionalString`
+- Created `lib/api/rate-limit.ts` — in-memory sliding-window rate limiter with preset tiers (read/write/sensitive/bulk)
+- Created `lib/api/with-auth.ts` — HOF wrapper providing auth + rate limiting + body size check + error handling for all API routes
+
+## 2026-04-04 - API Migration Phase 1: Profile Endpoints
+
+- Created `GET /api/v1/profile` — returns encryption_salt, test_iv, test_ciphertext, has_passphrase; rate-limited at 10 req/min (sensitive tier)
+- Created `PUT /api/v1/profile/passphrase` — updates test_iv + test_ciphertext with base64 validation on iv (12 bytes); same rate limit
+- Rewrote `SecretContext.tsx` to use API routes: `unlock()` and `checkPassphraseSetup()` now call `/api/v1/profile`, first-time setup calls `PUT /api/v1/profile/passphrase`
+- Removed top-level `import { createClient }` from SecretContext — only a temporary dynamic import remains inside `changePassphrase()` for env_vars (will be replaced in Phase 3 with bulk-update endpoint)
+- All existing consumers of `useSecrets` / `SecretProvider` unaffected — exported interface unchanged
+
+## 2026-04-04 - API Migration Phase 2: Project Endpoints
+
+- Created `GET /api/v1/projects` — lists projects with env_vars count, rate-limited (read tier)
+- Created `POST /api/v1/projects` — creates project with name/description validation, duplicate check, 201 response
+- Created `GET /api/v1/projects/:id` — returns project + env files, UUID validation on param
+- Created `PATCH /api/v1/projects/:id` — partial update (name and/or description), duplicate name check, description length validation (fixes old bug)
+- Created `DELETE /api/v1/projects/:id` — ownership verification before cascade delete
+- Migrated `add-project-dialog.tsx` from `createProject` server action → `POST /api/v1/projects`
+- Migrated `project-card.tsx` from `deleteProject` server action → `DELETE /api/v1/projects/:id`
+- Migrated `project-details-client.tsx` from `updateProjectName`/`updateProjectDescription` server actions → `PATCH /api/v1/projects/:id`
+- Migrated `project-details-client.tsx` refetchEnvFiles from direct Supabase client → `GET /api/v1/projects/:id`
+- Server-side pages (dashboard, project detail) kept using direct Supabase server client (efficient, no unnecessary HTTP hop)
+- `app/(app)/actions.ts` now has zero importers — dead code, will be deleted in Phase 6
+
+## 2026-04-04 - API Migration Phase 3: Env File Endpoints
+
+- Created `POST /api/v1/projects/:id/env` — add encrypted env file with base64 iv (12 bytes) + ciphertext validation, project ownership check
+- Created `DELETE /api/v1/projects/:id/env` — batch delete with UUID validation per ID, max 50 batch size
+- Created `PATCH /api/v1/projects/:id/env/:fileId` — update encrypted content with iv/ciphertext validation
+- Created `PATCH /api/v1/projects/:id/env/:fileId/name` — rename with duplicate check via unique constraint
+- Created `PUT /api/v1/env/bulk-update` — batch re-encrypt endpoint (max 200 entries, 1MB body limit, bulk rate tier)
+- Created `GET /api/v1/env/bulk-update` — fetch all user's env_vars (id, iv, ciphertext) for re-encryption
+- Fully migrated `SecretContext.changePassphrase()` to API — no more direct Supabase client imports in SecretContext
+- Migrated `add-env-dialog.tsx`, `env-file-card.tsx`, `env-file-details-client.tsx` from server actions to API fetch calls
+- `app/(app)/projects/[id]/env/[fileId]/actions.ts` now has zero importers
+- `app/(app)/projects/[id]/actions.ts` only has version history imports remaining (Phase 4 scope)
+
+## 2026-04-04 - API Migration Phase 4: Version History Endpoints
+
+- Created `GET /api/v1/env/:envVarId/versions` — list version history with UUID validation, read rate limit
+- Created `GET /api/v1/env/:envVarId/versions/:versionId` — get specific version with dual UUID validation, scoped to env_var_id
+- Created `POST /api/v1/env/:envVarId/versions/:versionId/restore` — restore with version-belongs-to-env-var check, revalidates project path
+- Migrated `version-history-dialog.tsx` from server actions to API fetch calls (loadHistory, viewVersion, handleRestore)
+- Migrated `env-file-history-client.tsx` from server actions to API fetch calls (loadHistory, handleRestore)
+- All three server action files now have zero importers — fully dead code ready for cleanup in Phase 6
+
+## 2026-04-04 - API Migration Phase 5: Security Hardening
+
+- Verified all 15 route handlers already have rate limiting at correct tiers (read/write/sensitive/bulk)
+- Verified body size limits already in place (100KB default, 1MB for bulk-update)
+- Added CORS support to `lib/api/response.ts` — origin-checked `Access-Control-Allow-Origin`, methods, headers, max-age
+- Added CORS preflight (OPTIONS) handling in `withAuth` wrapper — returns 204 with CORS headers
+- Origin allowlist via `NEXT_PUBLIC_APP_URL` env var (defaults to localhost:4321), expandable for VSCode extension
+- Added `X-Request-Id` (UUID) to every API response for traceability
+- Verified security headers already present on all responses: `nosniff`, `no-store`, `DENY`
+- Verified error sanitization: API routes throw `ApiError` with safe messages, `withAuth` catches all and never leaks Supabase internals
+- Audited `console.error` calls: API routes have zero; old server action files (dead code) have them but will be deleted in Phase 6; client-side calls are appropriate for browser debugging
+
+## 2026-04-04 - API Migration Phase 6: Client Integration & Cleanup
+
+- Created `lib/api/client.ts` — typed `apiClient<T>()` fetch wrapper with JSON handling and error extraction
+- Deleted all 3 old server action files (zero importers confirmed):
+  - `app/(app)/actions.ts`
+  - `app/(app)/projects/[id]/actions.ts`
+  - `app/(app)/projects/[id]/env/[fileId]/actions.ts`
+- Verified `SecretContext.tsx` has zero Supabase imports — fully API-driven since Phase 3
+- Kept `lib/supabase/client.ts` — still used by auth components (login, register, logout, app-header) for Supabase Auth SDK calls
+- All client components already migrated to `fetch()` calls in Phases 2–4
+- Server-side pages kept using direct Supabase server client (efficient, no unnecessary HTTP hop)
+- Zero diagnostics across all modified files after deletion
+- Remaining: 6.7 (smoke test) and 6.8 (revalidation verification) require manual testing
