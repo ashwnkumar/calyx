@@ -11,7 +11,10 @@
 
 import { type NextRequest } from "next/server";
 import { authenticateRequest, type AuthContext } from "@/lib/api/auth";
-import { error as errorResponse } from "@/lib/api/response";
+import {
+  error as errorResponse,
+  preflight as preflightResponse,
+} from "@/lib/api/response";
 import { ApiError } from "@/lib/types/api";
 import {
   rateLimit as checkRateLimit,
@@ -47,6 +50,13 @@ export function withAuth(
   const { rateLimit: rateLimitConfig, maxBodySize = 102_400 } = options ?? {};
 
   return async (request: NextRequest, routeParams?: RouteParams) => {
+    // Handle CORS preflight
+    if (request.method === "OPTIONS") {
+      return preflightResponse(request.headers.get("origin"));
+    }
+
+    const origin = request.headers.get("origin");
+
     try {
       // 1. Authenticate
       const authCtx = await authenticateRequest();
@@ -62,6 +72,7 @@ export function withAuth(
           return errorResponse(
             "Too many requests. Please try again later.",
             429,
+            origin,
           );
         }
       }
@@ -74,7 +85,7 @@ export function withAuth(
       ) {
         const contentLength = request.headers.get("content-length");
         if (contentLength && parseInt(contentLength, 10) > maxBodySize) {
-          return errorResponse("Request body too large", 413);
+          return errorResponse("Request body too large", 413, origin);
         }
       }
 
@@ -86,12 +97,12 @@ export function withAuth(
     } catch (err) {
       // Known API errors → proper status code
       if (err instanceof ApiError) {
-        return errorResponse(err.message, err.statusCode);
+        return errorResponse(err.message, err.statusCode, origin);
       }
 
       // Unexpected errors → 500, never leak internals
       console.error("Unhandled API error:", err);
-      return errorResponse("Internal server error", 500);
+      return errorResponse("Internal server error", 500, origin);
     }
   };
 }

@@ -1896,3 +1896,29 @@ _This file is automatically maintained as development progresses. Each significa
 - Migrated `version-history-dialog.tsx` from server actions to API fetch calls (loadHistory, viewVersion, handleRestore)
 - Migrated `env-file-history-client.tsx` from server actions to API fetch calls (loadHistory, handleRestore)
 - All three server action files now have zero importers — fully dead code ready for cleanup in Phase 6
+
+## 2026-04-04 - API Migration Phase 5: Security Hardening
+
+- Verified all 15 route handlers already have rate limiting at correct tiers (read/write/sensitive/bulk)
+- Verified body size limits already in place (100KB default, 1MB for bulk-update)
+- Added CORS support to `lib/api/response.ts` — origin-checked `Access-Control-Allow-Origin`, methods, headers, max-age
+- Added CORS preflight (OPTIONS) handling in `withAuth` wrapper — returns 204 with CORS headers
+- Origin allowlist via `NEXT_PUBLIC_APP_URL` env var (defaults to localhost:4321), expandable for VSCode extension
+- Added `X-Request-Id` (UUID) to every API response for traceability
+- Verified security headers already present on all responses: `nosniff`, `no-store`, `DENY`
+- Verified error sanitization: API routes throw `ApiError` with safe messages, `withAuth` catches all and never leaks Supabase internals
+- Audited `console.error` calls: API routes have zero; old server action files (dead code) have them but will be deleted in Phase 6; client-side calls are appropriate for browser debugging
+
+## 2026-04-04 - API Migration Phase 6: Client Integration & Cleanup
+
+- Created `lib/api/client.ts` — typed `apiClient<T>()` fetch wrapper with JSON handling and error extraction
+- Deleted all 3 old server action files (zero importers confirmed):
+  - `app/(app)/actions.ts`
+  - `app/(app)/projects/[id]/actions.ts`
+  - `app/(app)/projects/[id]/env/[fileId]/actions.ts`
+- Verified `SecretContext.tsx` has zero Supabase imports — fully API-driven since Phase 3
+- Kept `lib/supabase/client.ts` — still used by auth components (login, register, logout, app-header) for Supabase Auth SDK calls
+- All client components already migrated to `fetch()` calls in Phases 2–4
+- Server-side pages kept using direct Supabase server client (efficient, no unnecessary HTTP hop)
+- Zero diagnostics across all modified files after deletion
+- Remaining: 6.7 (smoke test) and 6.8 (revalidation verification) require manual testing

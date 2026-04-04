@@ -222,25 +222,25 @@ Bulk (for passphrase change):
 
 > Add the security layers that server actions couldn't support.
 
-- [ ] **5.1** Apply rate limiting to all endpoints via the `with-auth` wrapper
+- [x] **5.1** Apply rate limiting to all endpoints via the `with-auth` wrapper
   - Read endpoints: 60 req/min
   - Write endpoints: 30 req/min
   - Profile/passphrase: 10 req/min (brute-force protection)
   - Bulk update: 5 req/min
-- [ ] **5.2** Add request body size limits
+- [x] **5.2** Add request body size limits
   - General: 100KB max
   - Bulk update: 1MB max (many env files)
   - Reject oversized payloads with 413
-- [ ] **5.3** Add CORS configuration for API routes
+- [x] **5.3** Add CORS configuration for API routes
   - Allow only the app's own origin for now
   - Will expand for VSCode extension origin later
-- [ ] **5.4** Add security headers to all API responses
+- [x] **5.4** Add security headers to all API responses
   - `X-Content-Type-Options: nosniff`
   - `Cache-Control: no-store` (sensitive data)
   - `X-Frame-Options: DENY`
-- [ ] **5.5** Sanitize error responses — never leak Supabase/Postgres error details to client
-- [ ] **5.6** Add request ID generation for traceability (optional, `X-Request-Id` header)
-- [ ] **5.7** Audit `console.error` calls — replace with structured logging or remove in production
+- [x] **5.5** Sanitize error responses — never leak Supabase/Postgres error details to client
+- [x] **5.6** Add request ID generation for traceability (optional, `X-Request-Id` header)
+- [x] **5.7** Audit `console.error` calls — replace with structured logging or remove in production
 
 ---
 
@@ -248,18 +248,18 @@ Bulk (for passphrase change):
 
 > Wire the web app to the new API and remove dead code.
 
-- [ ] **6.1** Create API client utility: `lib/api/client.ts`
+- [x] **6.1** Create API client utility: `lib/api/client.ts`
   - Typed `fetch` wrapper with error handling, auth header forwarding, response parsing
   - Used by both client components and server components (with cookie forwarding)
-- [ ] **6.2** Update all page-level server components to fetch via API client (with cookie passthrough)
-- [ ] **6.3** Update all client components to use API client instead of server actions
-- [ ] **6.4** Remove `SecretContext` direct Supabase imports — should only use API + client-side crypto
-- [ ] **6.5** Delete all old server action files:
+- [x] **6.2** Update all page-level server components to fetch via API client (with cookie passthrough)
+- [x] **6.3** Update all client components to use API client instead of server actions
+- [x] **6.4** Remove `SecretContext` direct Supabase imports — should only use API + client-side crypto
+- [x] **6.5** Delete all old server action files:
   - `app/(app)/actions.ts`
   - `app/(app)/projects/[id]/actions.ts`
   - `app/(app)/projects/[id]/env/[fileId]/actions.ts`
-- [ ] **6.6** Remove `lib/supabase/client.ts` browser client if no longer needed (all client calls go through API)
-  - Note: keep if SecretContext still needs it for profile reads during unlock (evaluate)
+- [x] **6.6** Remove `lib/supabase/client.ts` browser client if no longer needed (all client calls go through API)
+  - Note: kept — still used by login, register, logout, app-header for Supabase Auth SDK calls (correct usage)
 - [ ] **6.7** Run full app smoke test — every CRUD flow, unlock/lock, passphrase change, version restore
 - [ ] **6.8** Verify `revalidatePath` / `revalidateTag` still works for Next.js cache invalidation
   - API routes can still call `revalidatePath()` since they run server-side
