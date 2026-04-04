@@ -170,24 +170,18 @@ export function SecretProvider({ children }: { children: ReactNode }) {
         const newKey = await deriveKey(newPassphrase, profile.encryption_salt);
 
         // 4. Fetch all env_vars for this user via API
-        const envRes = await fetch("/api/v1/env/bulk-update", {
-          method: "GET",
-        });
+        const envRes = await fetch("/api/v1/env/bulk-update");
+        const envJson: ApiResponse<
+          { id: string; iv: string; ciphertext: string }[]
+        > = await envRes.json();
 
-        // Note: bulk-update GET doesn't exist yet (Phase 3).
-        // For now, fall back to direct Supabase client for env_vars fetch.
-        // This will be fully migrated in Phase 3 (task 3.5 / 3.6).
-        const { createClient } = await import("@/lib/supabase/client");
-        const supabase = createClient();
-        const { data: envVars, error: envError } = await supabase
-          .from("env_vars")
-          .select("id, iv, ciphertext");
-
-        if (envError) throw envError;
+        if (!envJson.success)
+          throw new Error(envJson.error || "Failed to fetch env vars");
+        const envVars = envJson.data;
 
         // 5. Re-encrypt each env_var with new key
         const updates = await Promise.all(
-          (envVars || []).map(async (v) => {
+          envVars.map(async (v) => {
             const plaintext = await decrypt(v.iv, v.ciphertext, oldKey);
             const { iv, ciphertext } = await encrypt(plaintext, newKey);
             return { id: v.id, iv, ciphertext };
@@ -200,16 +194,25 @@ export function SecretProvider({ children }: { children: ReactNode }) {
           newKey,
         );
 
-        // 7. Batch update all env_vars
-        // TODO: Replace with PUT /api/v1/env/bulk-update in Phase 3
+        // 7. Batch update all env_vars via API
         if (updates.length > 0) {
-          for (const update of updates) {
-            const { error: updateError } = await supabase
-              .from("env_vars")
-              .update({ iv: update.iv, ciphertext: update.ciphertext })
-              .eq("id", update.id);
+          const bulkRes = await fetch("/api/v1/env/bulk-update", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ updates }),
+          });
+          const bulkJson: ApiResponse<{
+            updated: number;
+            total: number;
+            partial: boolean;
+          }> = await bulkRes.json();
 
-            if (updateError) throw updateError;
+          if (!bulkJson.success)
+            throw new Error(bulkJson.error || "Bulk update failed");
+          if (bulkJson.data.partial) {
+            throw new Error(
+              "Some env vars failed to update — passphrase change incomplete",
+            );
           }
         }
 

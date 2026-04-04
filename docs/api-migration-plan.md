@@ -168,34 +168,34 @@ Bulk (for passphrase change):
 
 > Migrate env file CRUD.
 
-- [ ] **3.1** `POST /api/v1/projects/:id/env` → `app/api/v1/projects/[id]/env/route.ts`
+- [x] **3.1** `POST /api/v1/projects/:id/env` → `app/api/v1/projects/[id]/env/route.ts`
   - Body: `{ name, iv, ciphertext }`
   - Validates: UUID project ID, base64 iv (12 bytes), non-empty ciphertext, name length
   - Project ownership check
   - Replaces: `addEnvFile()` server action
-- [ ] **3.2** `DELETE /api/v1/projects/:id/env` → same route file, DELETE handler
+- [x] **3.2** `DELETE /api/v1/projects/:id/env` → same route file, DELETE handler
   - Body: `{ ids: string[] }`
   - Validates: each ID is UUID, array not empty, max batch size (e.g. 50)
   - Replaces: `deleteEnvFiles()` server action
-- [ ] **3.3** `PATCH /api/v1/projects/:id/env/:fileId` → `app/api/v1/projects/[id]/env/[fileId]/route.ts`
+- [x] **3.3** `PATCH /api/v1/projects/:id/env/:fileId` → `app/api/v1/projects/[id]/env/[fileId]/route.ts`
   - Body: `{ iv, ciphertext }`
   - Validates base64 iv, non-empty ciphertext
   - Replaces: `updateEnvFile()` server action
-- [ ] **3.4** `PATCH /api/v1/projects/:id/env/:fileId/name` → `app/api/v1/projects/[id]/env/[fileId]/name/route.ts`
+- [x] **3.4** `PATCH /api/v1/projects/:id/env/:fileId/name` → `app/api/v1/projects/[id]/env/[fileId]/name/route.ts`
   - Body: `{ name }`
   - Validates name length, duplicate check
   - Replaces: `updateEnvFileName()` server action
-- [ ] **3.5** `PUT /api/v1/env/bulk-update` → `app/api/v1/env/bulk-update/route.ts`
+- [x] **3.5** `PUT /api/v1/env/bulk-update` → `app/api/v1/env/bulk-update/route.ts`
   - Body: `{ updates: [{ id, iv, ciphertext }] }`
   - Validates each entry, max batch size
   - Executes all updates (ideally in a transaction via Supabase RPC if available)
   - Replaces: the `for` loop in `SecretContext.changePassphrase()`
   - Fixes the non-atomic update bug
-- [ ] **3.6** Update `SecretContext.changePassphrase()` to use bulk-update + profile passphrase endpoints
-- [ ] **3.7** Update `project-details-client.tsx` to fetch env files via API instead of direct Supabase
-- [ ] **3.8** Update page components that call env file server actions to use `fetch()`
-- [ ] **3.9** Delete `app/(app)/projects/[id]/actions.ts` once all callers are migrated
-- [ ] **3.10** Delete `app/(app)/projects/[id]/env/[fileId]/actions.ts` once all callers are migrated
+- [x] **3.6** Update `SecretContext.changePassphrase()` to use bulk-update + profile passphrase endpoints
+- [x] **3.7** Update `project-details-client.tsx` to fetch env files via API instead of direct Supabase
+- [x] **3.8** Update page components that call env file server actions to use `fetch()`
+- [x] **3.9** Delete `app/(app)/projects/[id]/actions.ts` once all callers are migrated
+- [x] **3.10** Delete `app/(app)/projects/[id]/env/[fileId]/actions.ts` once all callers are migrated
 
 ---
 

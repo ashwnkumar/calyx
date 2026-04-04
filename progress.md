@@ -1874,3 +1874,16 @@ _This file is automatically maintained as development progresses. Each significa
 - Migrated `project-details-client.tsx` refetchEnvFiles from direct Supabase client → `GET /api/v1/projects/:id`
 - Server-side pages (dashboard, project detail) kept using direct Supabase server client (efficient, no unnecessary HTTP hop)
 - `app/(app)/actions.ts` now has zero importers — dead code, will be deleted in Phase 6
+
+## 2026-04-04 - API Migration Phase 3: Env File Endpoints
+
+- Created `POST /api/v1/projects/:id/env` — add encrypted env file with base64 iv (12 bytes) + ciphertext validation, project ownership check
+- Created `DELETE /api/v1/projects/:id/env` — batch delete with UUID validation per ID, max 50 batch size
+- Created `PATCH /api/v1/projects/:id/env/:fileId` — update encrypted content with iv/ciphertext validation
+- Created `PATCH /api/v1/projects/:id/env/:fileId/name` — rename with duplicate check via unique constraint
+- Created `PUT /api/v1/env/bulk-update` — batch re-encrypt endpoint (max 200 entries, 1MB body limit, bulk rate tier)
+- Created `GET /api/v1/env/bulk-update` — fetch all user's env_vars (id, iv, ciphertext) for re-encryption
+- Fully migrated `SecretContext.changePassphrase()` to API — no more direct Supabase client imports in SecretContext
+- Migrated `add-env-dialog.tsx`, `env-file-card.tsx`, `env-file-details-client.tsx` from server actions to API fetch calls
+- `app/(app)/projects/[id]/env/[fileId]/actions.ts` now has zero importers
+- `app/(app)/projects/[id]/actions.ts` only has version history imports remaining (Phase 4 scope)

@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useSecrets } from "@/lib/contexts/SecretContext";
 import { encrypt } from "@/lib/crypto";
-import { addEnvFile } from "@/app/(app)/projects/[id]/actions";
+import type { ApiResponse, EnvFile as ApiEnvFile } from "@/lib/types/api";
 
 type EnvFile = {
   id: string;
@@ -85,12 +85,17 @@ export function AddEnvDialog({
       // Encrypt entire content
       const { iv, ciphertext } = await encrypt(formData.content, cryptoKey);
 
-      // Call Server Action
-      const result = await addEnvFile(projectId, {
-        name: formData.name.trim(),
-        iv,
-        ciphertext,
+      // Call API
+      const res = await fetch(`/api/v1/projects/${projectId}/env`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: formData.name.trim(),
+          iv,
+          ciphertext,
+        }),
       });
+      const result: ApiResponse<EnvFile> = await res.json();
 
       if (!result.success) {
         throw new Error(result.error);
