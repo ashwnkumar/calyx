@@ -1989,3 +1989,61 @@ _This file is automatically maintained as development progresses. Each significa
 - `components/app-header.tsx` - Added IDs to lock button, nav, passphrase banner
 - `components/projects/project-listing-client.tsx` - Added ID to add project button
 - `app/globals.css` - Added driver.js style overrides
+
+### 2026-04-09 - Auth Redirect Loop Fix
+
+- Fixed redirect loop for new users between `/login` and `/dashboard`
+- Root cause: middleware excluded `/dashboard` from auth checks, letting unauthenticated users through to the app layout which then bounced them to `/login`, while the auth layout saw a partial session and bounced back to `/dashboard`
+- Updated `lib/supabase/proxy.ts`: removed `/dashboard` exclusion, added explicit redirect for authenticated users away from `/login` and `/register`
+- Updated `app/(auth)/layout.tsx`: added error checking to `getUser()` — only redirects to dashboard if user exists AND no error
+
+### 2026-04-09 - Product Tour Persistence via Profile Settings
+
+- Added `settings` JSONB column to `profiles` table (migration: `ALTER TABLE profiles ADD COLUMN settings jsonb NOT NULL DEFAULT '{}'::jsonb`)
+- Updated `GET /api/v1/profile` to include `settings` in response
+- Created `PATCH /api/v1/profile/settings` endpoint — shallow-merges keys into settings JSONB column for extensible flag storage
+- Rewired `ProductTour` component from localStorage to profile API — reads `settings.has_seen_tour` on mount, writes via PATCH on tour completion
+- Tour status now persists across devices and browser clears
+
+### 2026-04-09 - Product Tour Styling Overhaul
+
+- Reworked driver.js CSS overrides in `globals.css` to match Calyx design system
+- Popover container: `rounded-xl`, `--shadow-lg`, matching Card component
+- Title/description: matches DialogTitle/DialogDescription sizing and colors
+- Buttons: Back matches shadcn outline variant with hover states, Next matches primary variant
+- Close X button: ghost-styled instead of primary fill
+- Overlay: lighter 40% opacity, highlighted elements get `--ring` outline
+- Arrow fills match popover background
+
+### 2026-04-09 - Passphrase Banner Flash Fix
+
+- Fixed flash of "Set up passphrase" banner on page load for users who already have a passphrase
+- Added `isLoading` check from SecretContext — banner now hidden while profile fetch is in progress
+- Updated `components/app-header.tsx` to destructure `isLoading` and gate banner rendering on `!isLoading && !isPassphraseSetup`
+
+### 2026-04-09 - Delete Account Flow
+
+- Created `DELETE /api/v1/profile/delete` endpoint — cascades through env_vars → projects → profiles → auth.users (admin client for auth deletion)
+- Requires email confirmation in request body as safety check
+- Created `DeleteAccountDialog` component with email-to-confirm input pattern
+- Wired into settings page Danger Zone card, replacing "Coming soon" placeholder
+- On success: signs out locally, redirects to home with toast
+
+### 2026-04-09 - Locked State UX Improvements
+
+- History page: replaced encrypted ciphertext dump with clean locked state (lock icon + message), matching env file detail page pattern
+- History button on env file detail page now hidden when locked
+- Removed dead `!isUnlocked` ciphertext display branch from history preview panel
+- Added `promptUnlock` / `registerPromptUnlock` to SecretContext — allows any component to trigger the unlock or setup dialog
+- AppHeader registers its dialog opener via `registerPromptUnlock` on mount
+- Added "Unlock Secrets" CTA button to locked states on both env file detail page and history page
+- Both CTAs call `promptUnlock()` which opens the appropriate dialog (setup or unlock)
+
+### 2026-04-09 - Change Passphrase Dialog Improvements
+
+- Removed unlock requirement — button always enabled, current passphrase verified inside `changePassphrase()` anyway
+- Aligned minimum length to 12 characters (was 8), matching `validatePassphrase` from shared validation utils
+- Added check that new passphrase differs from current
+- Added inline validation errors that clear as user types
+- Added proper `aria-invalid` / `aria-describedby` for accessibility
+- Loading spinner on submit, auto-focus on current passphrase field, clean form reset on close
