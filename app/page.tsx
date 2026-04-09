@@ -219,15 +219,6 @@ export default async function HomePage() {
               </div>
             </div>
             <div className="flex gap-3">
-              <Zap className="size-5 text-primary shrink-0 mt-0.5" />
-              <div>
-                <h3 className="font-semibold mb-1">Fully responsive</h3>
-                <p className="text-sm text-muted-foreground">
-                  Works on mobile, tablet, and desktop
-                </p>
-              </div>
-            </div>
-            <div className="flex gap-3">
               <History className="size-5 text-primary shrink-0 mt-0.5" />
               <div>
                 <h3 className="font-semibold mb-1">Version control</h3>

@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { AppHeader } from "@/components/app-header";
 import { AppFooter } from "@/components/app-footer";
 import { SecretProvider } from "@/lib/contexts/SecretContext";
+import { ProductTour } from "@/components/product-tour";
 
 export const metadata: Metadata = {
   title: "Dashboard",
@@ -42,6 +43,7 @@ export default async function AppLayout({
         </main>
         <AppFooter />
       </div>
+      <ProductTour />
     </SecretProvider>
   );
 }

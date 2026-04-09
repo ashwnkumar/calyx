@@ -16,7 +16,7 @@ export const GET = withAuth(
   async (_request, { supabase }) => {
     const { data: profile, error: dbError } = await supabase
       .from("profiles")
-      .select("encryption_salt, test_iv, test_ciphertext")
+      .select("encryption_salt, test_iv, test_ciphertext, settings")
       .single();
 
     if (dbError || !profile) {
@@ -32,6 +32,7 @@ export const GET = withAuth(
       test_iv: profile.test_iv ?? null,
       test_ciphertext: profile.test_ciphertext ?? null,
       has_passphrase: !!(profile.test_iv && profile.test_ciphertext),
+      settings: profile.settings ?? {},
     });
   },
   { rateLimit: RATE_LIMITS.sensitive },

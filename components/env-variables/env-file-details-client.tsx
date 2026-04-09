@@ -71,7 +71,7 @@ export function EnvFileDetailsClient({
   envFile,
 }: EnvFileDetailsClientProps) {
   const router = useRouter();
-  const { cryptoKey, isUnlocked } = useSecrets();
+  const { cryptoKey, isUnlocked, promptUnlock } = useSecrets();
   const [decryptedContent, setDecryptedContent] = useState<string | null>(null);
   const [isDecrypting, setIsDecrypting] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -337,19 +337,21 @@ export function EnvFileDetailsClient({
               </Button>
             </>
           )}
-          <Button
-            variant="secondary"
-            onClick={() =>
-              router.push(
-                `/projects/${project.id}/env/${currentEnvFile.id}/history`,
-              )
-            }
-            size="sm"
-            className="gap-1.5"
-          >
-            <History className="size-3.5" />
-            History
-          </Button>
+          {isUnlocked && (
+            <Button
+              variant="secondary"
+              onClick={() =>
+                router.push(
+                  `/projects/${project.id}/env/${currentEnvFile.id}/history`,
+                )
+              }
+              size="sm"
+              className="gap-1.5"
+            >
+              <History className="size-3.5" />
+              History
+            </Button>
+          )}
           {isUnlocked && !isEditing && (
             <Button
               variant="outline"
@@ -430,9 +432,18 @@ export function EnvFileDetailsClient({
               <div className="rounded-full bg-muted p-3 mb-3">
                 <Lock className="size-5 text-muted-foreground" />
               </div>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground mb-4">
                 This content is encrypted. Unlock to view.
               </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={promptUnlock}
+                className="gap-1.5"
+              >
+                <Lock className="size-3.5" />
+                Unlock Secrets
+              </Button>
             </div>
           )}
         </CardContent>

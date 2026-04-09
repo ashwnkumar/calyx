@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Clock,
+  Lock,
   RotateCcw,
   Eye,
   FileText,
@@ -15,7 +16,6 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useSecrets } from "@/lib/contexts/SecretContext";
 import { decrypt } from "@/lib/crypto";
 import type { ApiResponse } from "@/lib/types/api";
@@ -60,7 +60,7 @@ export function EnvFileHistoryClient({
   envFile,
 }: EnvFileHistoryClientProps) {
   const router = useRouter();
-  const { cryptoKey, isUnlocked } = useSecrets();
+  const { cryptoKey, isUnlocked, promptUnlock } = useSecrets();
   const [versions, setVersions] = useState<EnvVarVersion[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedVersion, setSelectedVersion] = useState<EnvVarVersion | null>(
@@ -250,249 +250,254 @@ export function EnvFileHistoryClient({
         </div>
       </div>
 
-      {!isUnlocked && (
-        <Alert className="mb-4">
-          <AlertDescription>
-            Unlock your secrets to view and restore version content
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {/* Two-column layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-        {/* Left: Version Tree */}
-        <div className="lg:col-span-1">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Clock className="h-5 w-5" />
-                Versions
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              {loading ? (
-                <div className="p-6 text-center text-muted-foreground">
-                  Loading versions...
-                </div>
-              ) : versions.length === 0 ? (
-                <div className="p-6 text-center text-muted-foreground">
-                  No version history available
-                </div>
-              ) : (
-                <div className="divide-y">
-                  {versions.map((version, index) => (
-                    <button
-                      key={version.id}
-                      onClick={() => handleSelectVersion(version)}
-                      className={`w-full text-left p-4 hover:bg-muted/50 transition-colors ${
-                        selectedVersion?.id === version.id
-                          ? "bg-muted border-l-4 border-primary"
-                          : ""
-                      }`}
-                    >
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-sm">
-                            v{version.version_number}
-                          </span>
-                          {index === 0 && (
-                            <Badge variant="outline" className="text-xs">
-                              Current
-                            </Badge>
-                          )}
-                        </div>
-                        {getChangeTypeBadge(version.change_type)}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        {formatDistanceToNow(new Date(version.changed_at), {
-                          addSuffix: true,
-                        })}
-                      </div>
-                      {version.change_note && (
-                        <div className="text-xs text-muted-foreground italic mt-1">
-                          {version.change_note}
-                        </div>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Right: File Preview */}
-        <div className="lg:col-span-2">
-          <Card className="h-full">
-            <CardHeader>
-              <div className="flex items-center justify-between gap-4">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  {viewMode === "preview" ? (
-                    <FileText className="h-5 w-5" />
-                  ) : (
-                    <GitCompare className="h-5 w-5" />
-                  )}
-                  {selectedVersion
-                    ? viewMode === "preview"
-                      ? `Version ${selectedVersion.version_number} Preview`
-                      : `Version ${selectedVersion.version_number} Diff`
-                    : "Select a version"}
-                </CardTitle>
-                <div className="flex gap-2">
-                  {selectedVersion && isUnlocked && (
-                    <div className="flex gap-1 border rounded-md p-1">
-                      <Button
-                        size="sm"
-                        variant={viewMode === "preview" ? "default" : "ghost"}
-                        onClick={() => handleViewModeChange("preview")}
-                        className="h-7 px-2"
-                      >
-                        <FileText className="h-3 w-3 mr-1" />
-                        Preview
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant={viewMode === "diff" ? "default" : "ghost"}
-                        onClick={() => handleViewModeChange("diff")}
-                        className="h-7 px-2"
-                        disabled={
-                          versions.findIndex(
-                            (v) => v.id === selectedVersion.id,
-                          ) ===
-                          versions.length - 1
-                        }
-                      >
-                        <GitCompare className="h-3 w-3 mr-1" />
-                        Diff
-                      </Button>
-                    </div>
-                  )}
-                  {selectedVersion &&
-                    versions.findIndex((v) => v.id === selectedVersion.id) !==
-                      0 && (
-                      <Button
-                        size="sm"
-                        onClick={() => handleRestore(selectedVersion.id)}
-                        disabled={!isUnlocked || isRestoring}
-                      >
-                        <RotateCcw className="h-4 w-4 mr-1" />
-                        {isRestoring ? "Restoring..." : "Restore"}
-                      </Button>
-                    )}
-                </div>
+      {!isUnlocked ? (
+        <Card>
+          <CardContent className="py-16">
+            <div className="flex flex-col items-center justify-center text-center">
+              <div className="rounded-full bg-muted p-3 mb-3">
+                <Lock className="size-5 text-muted-foreground" />
               </div>
-            </CardHeader>
-            <CardContent>
-              {!selectedVersion ? (
-                <div className="flex items-center justify-center py-12 text-muted-foreground">
-                  <div className="text-center">
-                    <Eye className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                    <p>Select a version from the list to preview</p>
+              <p className="text-sm text-muted-foreground mb-4">
+                Unlock your secrets to view version history
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={promptUnlock}
+                className="gap-1.5"
+              >
+                <Lock className="size-3.5" />
+                Unlock Secrets
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        /* Two-column layout */
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+          {/* Left: Version Tree */}
+          <div className="lg:col-span-1">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Clock className="h-5 w-5" />
+                  Versions
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                {loading ? (
+                  <div className="p-6 text-center text-muted-foreground">
+                    Loading versions...
                   </div>
-                </div>
-              ) : isDecrypting ? (
-                <div className="flex items-center justify-center py-12 text-muted-foreground">
-                  Decrypting...
-                </div>
-              ) : !isUnlocked ? (
-                <div className="bg-muted p-4 rounded-md">
-                  <pre className="font-mono text-xs sm:text-sm text-muted-foreground overflow-x-auto whitespace-pre-wrap break-all">
-                    {selectedVersion.ciphertext.substring(0, 200)}
-                    {selectedVersion.ciphertext.length > 200 && "..."}
-                  </pre>
-                  <p className="text-xs sm:text-sm text-muted-foreground mt-4">
-                    This content is encrypted. Unlock your secrets to view the
-                    decrypted content.
-                  </p>
-                </div>
-              ) : decryptedValue ? (
-                viewMode === "preview" ? (
-                  <div>
-                    <div className="mb-3 flex items-center justify-between">
-                      <div className="text-sm text-muted-foreground">
-                        Changed{" "}
-                        {formatDistanceToNow(
-                          new Date(selectedVersion.changed_at),
-                          {
-                            addSuffix: true,
-                          },
-                        )}
-                      </div>
-                    </div>
-                    <pre className="font-mono text-xs sm:text-sm bg-muted p-4 rounded-md overflow-x-auto whitespace-pre-wrap break-words max-h-[600px] overflow-y-auto">
-                      {decryptedValue}
-                    </pre>
+                ) : versions.length === 0 ? (
+                  <div className="p-6 text-center text-muted-foreground">
+                    No version history available
                   </div>
                 ) : (
-                  <div>
-                    {compareVersion && (
+                  <div className="divide-y">
+                    {versions.map((version, index) => (
+                      <button
+                        key={version.id}
+                        onClick={() => handleSelectVersion(version)}
+                        className={`w-full text-left p-4 hover:bg-muted/50 transition-colors ${
+                          selectedVersion?.id === version.id
+                            ? "bg-muted border-l-4 border-primary"
+                            : ""
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-sm">
+                              v{version.version_number}
+                            </span>
+                            {index === 0 && (
+                              <Badge variant="outline" className="text-xs">
+                                Current
+                              </Badge>
+                            )}
+                          </div>
+                          {getChangeTypeBadge(version.change_type)}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {formatDistanceToNow(new Date(version.changed_at), {
+                            addSuffix: true,
+                          })}
+                        </div>
+                        {version.change_note && (
+                          <div className="text-xs text-muted-foreground italic mt-1">
+                            {version.change_note}
+                          </div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Right: File Preview */}
+          <div className="lg:col-span-2">
+            <Card className="h-full">
+              <CardHeader>
+                <div className="flex items-center justify-between gap-4">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    {viewMode === "preview" ? (
+                      <FileText className="h-5 w-5" />
+                    ) : (
+                      <GitCompare className="h-5 w-5" />
+                    )}
+                    {selectedVersion
+                      ? viewMode === "preview"
+                        ? `Version ${selectedVersion.version_number} Preview`
+                        : `Version ${selectedVersion.version_number} Diff`
+                      : "Select a version"}
+                  </CardTitle>
+                  <div className="flex gap-2">
+                    {selectedVersion && isUnlocked && (
+                      <div className="flex gap-1 border rounded-md p-1">
+                        <Button
+                          size="sm"
+                          variant={viewMode === "preview" ? "default" : "ghost"}
+                          onClick={() => handleViewModeChange("preview")}
+                          className="h-7 px-2"
+                        >
+                          <FileText className="h-3 w-3 mr-1" />
+                          Preview
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant={viewMode === "diff" ? "default" : "ghost"}
+                          onClick={() => handleViewModeChange("diff")}
+                          className="h-7 px-2"
+                          disabled={
+                            versions.findIndex(
+                              (v) => v.id === selectedVersion.id,
+                            ) ===
+                            versions.length - 1
+                          }
+                        >
+                          <GitCompare className="h-3 w-3 mr-1" />
+                          Diff
+                        </Button>
+                      </div>
+                    )}
+                    {selectedVersion &&
+                      versions.findIndex((v) => v.id === selectedVersion.id) !==
+                        0 && (
+                        <Button
+                          size="sm"
+                          onClick={() => handleRestore(selectedVersion.id)}
+                          disabled={!isUnlocked || isRestoring}
+                        >
+                          <RotateCcw className="h-4 w-4 mr-1" />
+                          {isRestoring ? "Restoring..." : "Restore"}
+                        </Button>
+                      )}
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {!selectedVersion ? (
+                  <div className="flex items-center justify-center py-12 text-muted-foreground">
+                    <div className="text-center">
+                      <Eye className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                      <p>Select a version from the list to preview</p>
+                    </div>
+                  </div>
+                ) : isDecrypting ? (
+                  <div className="flex items-center justify-center py-12 text-muted-foreground">
+                    Decrypting...
+                  </div>
+                ) : decryptedValue ? (
+                  viewMode === "preview" ? (
+                    <div>
                       <div className="mb-3 flex items-center justify-between">
                         <div className="text-sm text-muted-foreground">
-                          Comparing v{compareVersion.version_number} → v
-                          {selectedVersion.version_number}
-                        </div>
-                        <div className="flex gap-3 text-xs">
-                          <span className="text-green-600">
-                            +{getDiffStats(diffLines).added} added
-                          </span>
-                          <span className="text-red-600">
-                            -{getDiffStats(diffLines).removed} removed
-                          </span>
+                          Changed{" "}
+                          {formatDistanceToNow(
+                            new Date(selectedVersion.changed_at),
+                            {
+                              addSuffix: true,
+                            },
+                          )}
                         </div>
                       </div>
-                    )}
-                    {diffLines.length === 0 ? (
-                      <div className="text-center py-8 text-muted-foreground">
-                        No previous version to compare
-                      </div>
-                    ) : (
-                      <div className="border rounded-md overflow-hidden max-h-[600px] overflow-y-auto">
-                        <div className="font-mono text-xs sm:text-sm">
-                          {diffLines.map((line, index) => (
-                            <div
-                              key={index}
-                              className={`px-4 py-1 ${
-                                line.type === "added"
-                                  ? "bg-green-50 dark:bg-green-950/30 text-green-900 dark:text-green-100"
-                                  : line.type === "removed"
-                                    ? "bg-red-50 dark:bg-red-950/30 text-red-900 dark:text-red-100"
-                                    : "bg-background"
-                              }`}
-                            >
-                              <span
-                                className={`inline-block w-6 mr-2 text-muted-foreground select-none ${
+                      <pre className="font-mono text-xs sm:text-sm bg-muted p-4 rounded-md overflow-x-auto whitespace-pre-wrap break-words max-h-[600px] overflow-y-auto">
+                        {decryptedValue}
+                      </pre>
+                    </div>
+                  ) : (
+                    <div>
+                      {compareVersion && (
+                        <div className="mb-3 flex items-center justify-between">
+                          <div className="text-sm text-muted-foreground">
+                            Comparing v{compareVersion.version_number} → v
+                            {selectedVersion.version_number}
+                          </div>
+                          <div className="flex gap-3 text-xs">
+                            <span className="text-green-600">
+                              +{getDiffStats(diffLines).added} added
+                            </span>
+                            <span className="text-red-600">
+                              -{getDiffStats(diffLines).removed} removed
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                      {diffLines.length === 0 ? (
+                        <div className="text-center py-8 text-muted-foreground">
+                          No previous version to compare
+                        </div>
+                      ) : (
+                        <div className="border rounded-md overflow-hidden max-h-[600px] overflow-y-auto">
+                          <div className="font-mono text-xs sm:text-sm">
+                            {diffLines.map((line, index) => (
+                              <div
+                                key={index}
+                                className={`px-4 py-1 ${
                                   line.type === "added"
-                                    ? "text-green-600 dark:text-green-400"
+                                    ? "bg-green-50 dark:bg-green-950/30 text-green-900 dark:text-green-100"
                                     : line.type === "removed"
-                                      ? "text-red-600 dark:text-red-400"
-                                      : ""
+                                      ? "bg-red-50 dark:bg-red-950/30 text-red-900 dark:text-red-100"
+                                      : "bg-background"
                                 }`}
                               >
-                                {line.type === "added"
-                                  ? "+"
-                                  : line.type === "removed"
-                                    ? "-"
-                                    : " "}
-                              </span>
-                              <span className="whitespace-pre-wrap break-all">
-                                {line.content || " "}
-                              </span>
-                            </div>
-                          ))}
+                                <span
+                                  className={`inline-block w-6 mr-2 text-muted-foreground select-none ${
+                                    line.type === "added"
+                                      ? "text-green-600 dark:text-green-400"
+                                      : line.type === "removed"
+                                        ? "text-red-600 dark:text-red-400"
+                                        : ""
+                                  }`}
+                                >
+                                  {line.type === "added"
+                                    ? "+"
+                                    : line.type === "removed"
+                                      ? "-"
+                                      : " "}
+                                </span>
+                                <span className="whitespace-pre-wrap break-all">
+                                  {line.content || " "}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
+                    </div>
+                  )
+                ) : (
+                  <div className="flex items-center justify-center py-12 text-muted-foreground">
+                    Failed to decrypt version
                   </div>
-                )
-              ) : (
-                <div className="flex items-center justify-center py-12 text-muted-foreground">
-                  Failed to decrypt version
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

@@ -1942,3 +1942,50 @@ _This file is automatically maintained as development progresses. Each significa
   - 3 secondary insight cards (active 7d, no projects, avg vars/project)
   - Recent projects table (last 5 across all users with owner, var count, relative time)
   - Enriched users table with email confirmation status, per-user env var count, passphrase setup icon, tooltips
+
+## 2026-04-09 - Admin Dashboard Tabbed Layout
+
+- Installed shadcn/ui Tabs component (`components/ui/tabs.tsx`)
+- Restructured `components/admin/admin-dashboard-client.tsx` into 3 tabs: Overview, Users, Projects
+- Each tab is its own component (`OverviewTab`, `UsersTab`, `ProjectsTab`) for clean separation
+- Tab triggers show count badges (user count, project count) for quick reference
+- Bumped projects list from 5 to 25 since it now has a dedicated tab
+- Overview tab: stat cards (primary + secondary insights)
+- Users tab: full enriched user table
+- Projects tab: recent projects table with owner, var count, relative time
+
+### 2026-04-09 - Product Tour for New User Onboarding
+
+**Driver.js Integration:**
+
+- Installed `driver.js` (~5KB gzipped) for lightweight product tour
+- Created `ProductTour` component (`components/product-tour.tsx`):
+  - 6-step guided tour covering the core user flow
+  - Steps: Welcome → Create Project → Lock/Unlock → Passphrase Setup → Navigation → Completion
+  - Passphrase banner step conditionally shown only when passphrase isn't set up yet
+  - Tour triggers only for first-time users (checks localStorage flag)
+  - Waits for SecretContext to finish loading before starting
+  - 500ms delay to let dashboard render before tour begins
+  - Stores `calyx-tour-completed` in localStorage to prevent replay
+
+**UI Element IDs Added:**
+
+- `#add-project-btn` on Add Project button (project-listing-client.tsx)
+- `#lock-toggle-btn` on Lock/Unlock button (app-header.tsx)
+- `#passphrase-banner` on passphrase setup banner (app-header.tsx)
+- `#main-nav` on desktop navigation bar (app-header.tsx)
+
+**Custom Styling:**
+
+- Added driver.js CSS overrides in `globals.css` matching Calyx design system
+- Popover uses app's CSS variables for colors, fonts, borders, and radius
+- Buttons styled to match shadcn/ui button variants (primary for next, outline for back)
+- Dark mode compatible via CSS variable inheritance
+
+**Files Created/Modified:**
+
+- `components/product-tour.tsx` - New tour component
+- `app/(app)/layout.tsx` - Added ProductTour to app layout
+- `components/app-header.tsx` - Added IDs to lock button, nav, passphrase banner
+- `components/projects/project-listing-client.tsx` - Added ID to add project button
+- `app/globals.css` - Added driver.js style overrides

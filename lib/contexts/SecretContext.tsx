@@ -5,6 +5,7 @@ import {
   useContext,
   useState,
   useCallback,
+  useRef,
   ReactNode,
   useEffect,
 } from "react";
@@ -33,6 +34,10 @@ type SecretActions = {
     oldPassphrase: string,
     newPassphrase: string,
   ) => Promise<void>;
+  /** Opens the unlock or setup dialog from anywhere in the app */
+  promptUnlock: () => void;
+  /** Register the dialog opener (called by AppHeader) */
+  registerPromptUnlock: (fn: () => void) => void;
 };
 
 type SecretContextValue = SecretState & SecretActions;
@@ -74,6 +79,15 @@ export function SecretProvider({ children }: { children: ReactNode }) {
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [isPassphraseSetup, setIsPassphraseSetup] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const promptUnlockRef = useRef<(() => void) | null>(null);
+
+  const promptUnlock = useCallback(() => {
+    promptUnlockRef.current?.();
+  }, []);
+
+  const registerPromptUnlock = useCallback((fn: () => void) => {
+    promptUnlockRef.current = fn;
+  }, []);
 
   const unlock = useCallback(async (passphrase: string) => {
     try {
@@ -309,6 +323,8 @@ export function SecretProvider({ children }: { children: ReactNode }) {
         unlock,
         lock,
         changePassphrase,
+        promptUnlock,
+        registerPromptUnlock,
       }}
     >
       {children}

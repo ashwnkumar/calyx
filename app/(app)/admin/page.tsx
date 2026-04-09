@@ -65,8 +65,8 @@ export default async function AdminPage() {
     };
   });
 
-  // Recent projects (last 5)
-  const recentProjects = allProjects.slice(0, 5).map((p) => {
+  // Recent projects (last 25 — has its own tab now)
+  const recentProjects = allProjects.slice(0, 25).map((p) => {
     const ownerEmail =
       users.find((u) => u.id === p.user_id)?.email ?? "Unknown";
     const envCount =
