@@ -109,6 +109,7 @@ export function ProjectListingClient({
           </p>
         </div>
         <Button
+          id="add-project-btn"
           onClick={() => setIsDialogOpen(true)}
           className="gap-1.5 sm:w-auto w-full"
         >

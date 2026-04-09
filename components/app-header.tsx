@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import {
@@ -101,13 +101,27 @@ export function AppHeader({
   const router = useRouter();
   const pathname = usePathname();
 
-  const { isPassphraseSetup, isUnlocked, lock } = useSecrets();
+  const {
+    isPassphraseSetup,
+    isUnlocked,
+    isLoading,
+    lock,
+    registerPromptUnlock,
+  } = useSecrets();
 
   const [setupOpen, setSetupOpen] = useState(false);
   const [unlockOpen, setUnlockOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
 
   /* ───────────── Actions ───────────── */
+
+  // Register the unlock prompt so other components can trigger it
+  useEffect(() => {
+    registerPromptUnlock(() => {
+      if (!isPassphraseSetup) setSetupOpen(true);
+      else setUnlockOpen(true);
+    });
+  }, [isPassphraseSetup, registerPromptUnlock]);
 
   const handleLogout = async () => {
     const supabase = createClient();
@@ -148,6 +162,7 @@ export function AppHeader({
             </Link>
 
             <Button
+              id="lock-toggle-btn"
               variant="outline"
               size="sm"
               onClick={handleLockToggle}
@@ -163,7 +178,7 @@ export function AppHeader({
           </div>
 
           {/* Center: Desktop Nav */}
-          <div className="hidden sm:flex items-center gap-1">
+          <div id="main-nav" className="hidden sm:flex items-center gap-1">
             {NAV_ICONS.map(({ href, label, icon }) => (
               <NavIcon
                 key={href}
@@ -304,8 +319,8 @@ export function AppHeader({
       </nav>
 
       {/* Passphrase Banner */}
-      {!isPassphraseSetup && (
-        <div className="border-b bg-muted/50">
+      {!isLoading && !isPassphraseSetup && (
+        <div id="passphrase-banner" className="border-b bg-muted/50">
           <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 text-sm">
               <Key className="size-4 text-primary" />

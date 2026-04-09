@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChangePassphraseDialog } from "@/components/change-passphrase-dialog";
+import { DeleteAccountDialog } from "@/components/delete-account-dialog";
 
 type SettingsClientProps = {
   userEmail: string;
@@ -167,9 +168,7 @@ export function SettingsClient({
                   Permanently delete your account and all encrypted data
                 </p>
               </div>
-              <Button variant="destructive" size="sm" disabled>
-                Coming soon
-              </Button>
+              <DeleteAccountDialog userEmail={userEmail} />
             </div>
           </div>
         </CardContent>

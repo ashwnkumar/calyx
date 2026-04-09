@@ -9,7 +9,6 @@ import {
   UserX,
   Activity,
   TrendingUp,
-  FolderPlus,
   CheckCircle2,
   XCircle,
   Lock,
@@ -30,6 +29,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import {
   Tooltip,
@@ -133,6 +133,219 @@ function StatCard({
   );
 }
 
+/* ─── Tab: Overview ─── */
+
+function OverviewTab({ stats }: { stats: Stats }) {
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <StatCard
+          label="Total Users"
+          value={stats.totalUsers}
+          subtitle={`${stats.activeLastWeek} active this week`}
+          icon={Users}
+        />
+        <StatCard
+          label="Projects"
+          value={stats.totalProjects}
+          subtitle={`~${stats.avgProjectsPerUser} per user`}
+          icon={FolderKanban}
+        />
+        <StatCard
+          label="Env Variables"
+          value={stats.totalEnvVars}
+          subtitle={`~${stats.avgEnvVarsPerProject} per project`}
+          icon={KeyRound}
+        />
+        <StatCard
+          label="Encryption Setup"
+          value={stats.usersWithPassphrase}
+          subtitle={`of ${stats.totalUsers} users`}
+          icon={ShieldCheck}
+        />
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+        <StatCard
+          label="Active (7d)"
+          value={stats.activeLastWeek}
+          icon={Activity}
+        />
+        <StatCard
+          label="No Projects Yet"
+          value={stats.usersWithNoProjects}
+          icon={UserX}
+        />
+        <StatCard
+          label="Avg Vars / Project"
+          value={stats.avgEnvVarsPerProject}
+          icon={TrendingUp}
+        />
+      </div>
+    </div>
+  );
+}
+
+/* ─── Tab: Users ─── */
+
+function UsersTab({ users }: { users: UserRow[] }) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg">All Users</CardTitle>
+        <CardDescription>
+          {users.length} registered {users.length === 1 ? "user" : "users"}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {users.length === 0 ? (
+          <p className="text-sm text-muted-foreground py-4 text-center">
+            No users found.
+          </p>
+        ) : (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Email</TableHead>
+                  <TableHead className="text-center">Status</TableHead>
+                  <TableHead className="text-center">Projects</TableHead>
+                  <TableHead className="text-center">Vars</TableHead>
+                  <TableHead className="text-center">Encryption</TableHead>
+                  <TableHead>Joined</TableHead>
+                  <TableHead>Last Sign In</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {users.map((u) => (
+                  <TableRow key={u.id}>
+                    <TableCell className="font-medium max-w-[180px] truncate">
+                      {u.email}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Tooltip>
+                        <TooltipTrigger>
+                          {u.emailConfirmed ? (
+                            <CheckCircle2 className="size-4 text-green-600 dark:text-green-400 mx-auto" />
+                          ) : (
+                            <XCircle className="size-4 text-amber-500 mx-auto" />
+                          )}
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          {u.emailConfirmed
+                            ? "Email confirmed"
+                            : "Email not confirmed"}
+                        </TooltipContent>
+                      </Tooltip>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Badge variant="secondary" className="tabular-nums">
+                        {u.projectCount}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Badge variant="outline" className="tabular-nums">
+                        {u.envVarCount}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Tooltip>
+                        <TooltipTrigger>
+                          {u.passphraseSetup ? (
+                            <Lock className="size-4 text-green-600 dark:text-green-400 mx-auto" />
+                          ) : (
+                            <Unlock className="size-4 text-muted-foreground mx-auto" />
+                          )}
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          {u.passphraseSetup
+                            ? "Passphrase configured"
+                            : "No passphrase set"}
+                        </TooltipContent>
+                      </Tooltip>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground text-sm">
+                      {formatDate(u.createdAt)}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground text-sm">
+                      <span className="inline-flex items-center gap-1.5">
+                        <Clock className="size-3" />
+                        {formatRelative(u.lastSignIn)}
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+/* ─── Tab: Projects ─── */
+
+function ProjectsTab({ recentProjects }: { recentProjects: RecentProject[] }) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg">All Projects</CardTitle>
+        <CardDescription>
+          {recentProjects.length} most recent projects across all users
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {recentProjects.length === 0 ? (
+          <p className="text-sm text-muted-foreground py-4 text-center">
+            No projects found.
+          </p>
+        ) : (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Project</TableHead>
+                  <TableHead>Owner</TableHead>
+                  <TableHead className="text-center">Vars</TableHead>
+                  <TableHead>Created</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {recentProjects.map((p) => (
+                  <TableRow key={p.id}>
+                    <TableCell>
+                      <div>
+                        <p className="font-medium text-sm">{p.name}</p>
+                        {p.description && (
+                          <p className="text-xs text-muted-foreground truncate max-w-[200px]">
+                            {p.description}
+                          </p>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground max-w-[150px] truncate">
+                      {p.ownerEmail}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Badge variant="secondary" className="tabular-nums">
+                        {p.envVarCount}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground text-sm">
+                      {formatRelative(p.createdAt)}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 /* ─── Main Component ─── */
 
 export function AdminDashboardClient({
@@ -166,201 +379,41 @@ export function AdminDashboardClient({
           </p>
         </div>
 
-        {/* Primary stat cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <StatCard
-            label="Total Users"
-            value={stats.totalUsers}
-            subtitle={`${stats.activeLastWeek} active this week`}
-            icon={Users}
-          />
-          <StatCard
-            label="Projects"
-            value={stats.totalProjects}
-            subtitle={`~${stats.avgProjectsPerUser} per user`}
-            icon={FolderKanban}
-          />
-          <StatCard
-            label="Env Variables"
-            value={stats.totalEnvVars}
-            subtitle={`~${stats.avgEnvVarsPerProject} per project`}
-            icon={KeyRound}
-          />
-          <StatCard
-            label="Encryption Setup"
-            value={stats.usersWithPassphrase}
-            subtitle={`of ${stats.totalUsers} users`}
-            icon={ShieldCheck}
-          />
-        </div>
+        <Tabs defaultValue="overview" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="users">
+              Users
+              <Badge
+                variant="secondary"
+                className="ml-1.5 tabular-nums text-[10px] px-1.5 py-0"
+              >
+                {stats.totalUsers}
+              </Badge>
+            </TabsTrigger>
+            <TabsTrigger value="projects">
+              Projects
+              <Badge
+                variant="secondary"
+                className="ml-1.5 tabular-nums text-[10px] px-1.5 py-0"
+              >
+                {stats.totalProjects}
+              </Badge>
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Secondary insights */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          <StatCard
-            label="Active (7d)"
-            value={stats.activeLastWeek}
-            icon={Activity}
-          />
-          <StatCard
-            label="No Projects Yet"
-            value={stats.usersWithNoProjects}
-            icon={UserX}
-          />
-          <StatCard
-            label="Avg Vars / Project"
-            value={stats.avgEnvVarsPerProject}
-            icon={TrendingUp}
-          />
-        </div>
+          <TabsContent value="overview">
+            <OverviewTab stats={stats} />
+          </TabsContent>
 
-        {/* Recent Projects */}
-        {recentProjects.length > 0 && (
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <FolderPlus className="size-4 text-muted-foreground" />
-                <CardTitle className="text-lg">Recent Projects</CardTitle>
-              </div>
-              <CardDescription>
-                Latest projects created across all users
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Project</TableHead>
-                      <TableHead>Owner</TableHead>
-                      <TableHead className="text-center">Vars</TableHead>
-                      <TableHead>Created</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {recentProjects.map((p) => (
-                      <TableRow key={p.id}>
-                        <TableCell>
-                          <div>
-                            <p className="font-medium text-sm">{p.name}</p>
-                            {p.description && (
-                              <p className="text-xs text-muted-foreground truncate max-w-[200px]">
-                                {p.description}
-                              </p>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground max-w-[150px] truncate">
-                          {p.ownerEmail}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Badge variant="secondary" className="tabular-nums">
-                            {p.envVarCount}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-muted-foreground text-sm">
-                          {formatRelative(p.createdAt)}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+          <TabsContent value="users">
+            <UsersTab users={users} />
+          </TabsContent>
 
-        {/* Users table */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">All Users</CardTitle>
-            <CardDescription>
-              {users.length} registered {users.length === 1 ? "user" : "users"}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {users.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-4 text-center">
-                No users found.
-              </p>
-            ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Email</TableHead>
-                      <TableHead className="text-center">Status</TableHead>
-                      <TableHead className="text-center">Projects</TableHead>
-                      <TableHead className="text-center">Vars</TableHead>
-                      <TableHead className="text-center">Encryption</TableHead>
-                      <TableHead>Joined</TableHead>
-                      <TableHead>Last Sign In</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {users.map((u) => (
-                      <TableRow key={u.id}>
-                        <TableCell className="font-medium max-w-[180px] truncate">
-                          {u.email}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Tooltip>
-                            <TooltipTrigger>
-                              {u.emailConfirmed ? (
-                                <CheckCircle2 className="size-4 text-green-600 dark:text-green-400 mx-auto" />
-                              ) : (
-                                <XCircle className="size-4 text-amber-500 mx-auto" />
-                              )}
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              {u.emailConfirmed
-                                ? "Email confirmed"
-                                : "Email not confirmed"}
-                            </TooltipContent>
-                          </Tooltip>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Badge variant="secondary" className="tabular-nums">
-                            {u.projectCount}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Badge variant="outline" className="tabular-nums">
-                            {u.envVarCount}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Tooltip>
-                            <TooltipTrigger>
-                              {u.passphraseSetup ? (
-                                <Lock className="size-4 text-green-600 dark:text-green-400 mx-auto" />
-                              ) : (
-                                <Unlock className="size-4 text-muted-foreground mx-auto" />
-                              )}
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              {u.passphraseSetup
-                                ? "Passphrase configured"
-                                : "No passphrase set"}
-                            </TooltipContent>
-                          </Tooltip>
-                        </TableCell>
-                        <TableCell className="text-muted-foreground text-sm">
-                          {formatDate(u.createdAt)}
-                        </TableCell>
-                        <TableCell className="text-muted-foreground text-sm">
-                          <span className="inline-flex items-center gap-1.5">
-                            <Clock className="size-3" />
-                            {formatRelative(u.lastSignIn)}
-                          </span>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+          <TabsContent value="projects">
+            <ProjectsTab recentProjects={recentProjects} />
+          </TabsContent>
+        </Tabs>
       </div>
     </TooltipProvider>
   );
