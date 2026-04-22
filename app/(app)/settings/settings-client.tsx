@@ -81,7 +81,7 @@ export function SettingsClient({
       </Card>
 
       {/* Security */}
-      <Card>
+      {/* <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Shield className="size-4" />
@@ -102,7 +102,7 @@ export function SettingsClient({
             <ChangePassphraseDialog />
           </div>
         </CardContent>
-      </Card>
+      </Card> */}
 
       {/* Appearance */}
       <Card>
